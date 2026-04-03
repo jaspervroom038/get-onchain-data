@@ -3,7 +3,7 @@
 import pytest
 import pytest_asyncio
 
-from storage import get_average_metric, get_daily_sma, get_history, init_db, list_symbols, save_metric
+from storage import get_average_metric, get_daily_sma, get_history, get_std_metric, init_db, list_symbols, save_metric
 
 
 @pytest.fixture
@@ -111,3 +111,28 @@ async def test_get_daily_sma_insufficient_data(tmp_db):
 
     sma = await get_daily_sma("BTC.PRICE_USD", 5, to_ts=1_700_100_000, db_path=tmp_db)
     assert sma is None
+
+
+@pytest.mark.asyncio
+async def test_get_std_metric(tmp_db):
+    """Standard deviation of stored values."""
+    await init_db(db_path=tmp_db)
+    values = [10.0, 20.0, 30.0, 40.0, 50.0]
+    for i, v in enumerate(values):
+        await save_metric("TEST.STD", v, timestamp=1000 + i, db_path=tmp_db)
+
+    std = await get_std_metric("TEST.STD", db_path=tmp_db)
+    # Population std of [10,20,30,40,50] = sqrt(200) ≈ 14.142
+    import math
+    mean = 30.0
+    expected_std = math.sqrt(sum((x - mean) ** 2 for x in values) / len(values))
+    assert std == pytest.approx(expected_std)
+
+
+@pytest.mark.asyncio
+async def test_get_std_metric_insufficient_data(tmp_db):
+    """Returns None when fewer than 2 data points."""
+    await init_db(db_path=tmp_db)
+    await save_metric("TEST.STD", 100.0, timestamp=1000, db_path=tmp_db)
+    std = await get_std_metric("TEST.STD", db_path=tmp_db)
+    assert std is None

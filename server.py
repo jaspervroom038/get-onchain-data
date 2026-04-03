@@ -120,6 +120,18 @@ SYMBOL_META: dict[str, dict[str, Any]] = {
         "description": "Bitcoin Realized Price (avg on-chain cost basis)",
         "unit": "USD",
     },
+    "BTC.TWO_YEAR_MA": {
+        "description": "Bitcoin 2-Year Moving Average",
+        "unit": "USD",
+    },
+    "BTC.TWO_YEAR_MA_X5": {
+        "description": "Bitcoin 2-Year MA Multiplier Upper Band (2Y MA × 5)",
+        "unit": "USD",
+    },
+    "BTC.MA200W": {
+        "description": "Bitcoin 200-Week Moving Average",
+        "unit": "USD",
+    },
     "BTC.TRANSFERRED_PRICE_EST": {
         "description": "Bitcoin Transferred Price (estimated proxy)",
         "unit": "USD",
@@ -160,6 +172,41 @@ SYMBOL_META: dict[str, dict[str, Any]] = {
         "description": "Bitcoin Pi Cycle (111-DMA / 2×350-DMA)",
         "unit": "ratio",
         "category": "bottom",
+    },
+    "BTC.WEEKLY_RSI14": {
+        "description": "Bitcoin Weekly RSI (14)",
+        "unit": "index",
+        "category": "bottom",
+    },
+    "BTC.EXCHANGE_FLOW_IN": {
+        "description": "Bitcoin Daily Exchange Inflow (native BTC)",
+        "unit": "BTC",
+        "category": "analysis",
+    },
+    "BTC.EXCHANGE_FLOW_OUT": {
+        "description": "Bitcoin Daily Exchange Outflow (native BTC)",
+        "unit": "BTC",
+        "category": "analysis",
+    },
+    "BTC.EXCHANGE_NET_FLOW": {
+        "description": "Bitcoin Net Exchange Flow (out − in; positive = bullish)",
+        "unit": "BTC",
+        "category": "analysis",
+    },
+    "BTC.FEE_TOTAL_USD": {
+        "description": "Bitcoin Total Daily Transaction Fees (estimated USD)",
+        "unit": "USD",
+        "category": "analysis",
+    },
+    "BTC.MVRV_ZSCORE": {
+        "description": "Bitcoin MVRV Z-Score (standardised deviation from mean)",
+        "unit": "z-score",
+        "category": "analysis",
+    },
+    "BTC.ACTIVE_ADDR_CM": {
+        "description": "Bitcoin Active Addresses (Coin Metrics)",
+        "unit": "addresses",
+        "category": "analysis",
     },
 }
 
@@ -206,6 +253,7 @@ async def udf_search(
     """Search for symbols matching the query string."""
     results = []
     q = query.upper()
+    effective_limit = len(SYMBOL_META) if not q else limit
     for sym, meta in SYMBOL_META.items():
         if q in sym or q in meta["description"].upper():
             results.append(
@@ -218,7 +266,7 @@ async def udf_search(
                     "type": "metric",
                 }
             )
-        if len(results) >= limit:
+        if len(results) >= effective_limit:
             break
     return results
 
@@ -324,6 +372,40 @@ async def list_metric_symbols() -> dict:
     """Return all symbols that have at least one stored data-point."""
     symbols = await list_symbols()
     return {"symbols": symbols}
+
+
+@app.get("/metrics/bottom-gauge", tags=["Metrics"])
+async def bottom_gauge() -> dict:
+    """Return the composite Bottom Gauge score and individual signal states.
+
+    Signals (each contributes +1 when active):
+    - Exchange Net Flow < 0 (net outflow = accumulation)
+    - Puell Multiple < 0.5 (miner capitulation)
+    - MVRV Z-Score < 0 (market below realised mean)
+    - NUPL < 0 (net unrealised loss)
+    """
+    now = int(time.time())
+    signals: dict[str, bool | None] = {}
+    score = 0
+    max_score = 4
+
+    for sym, key, threshold, below in [
+        ("BTC.EXCHANGE_NET_FLOW", "net_flow", 0, True),
+        ("BTC.PUELL_MULTIPLE", "puell", 0.5, True),
+        ("BTC.MVRV_ZSCORE", "mvrv_z", 0, True),
+        ("BTC.NUPL", "nupl", 0, True),
+    ]:
+        rows = await get_history(sym, 0, now)
+        if rows:
+            val = rows[-1]["value"]
+            active = val < threshold if below else val > threshold
+            signals[key] = active
+            if active:
+                score += 1
+        else:
+            signals[key] = None
+
+    return {"score": score, "max": max_score, "signals": signals}
 
 
 @app.get("/metrics/{symbol}", tags=["Metrics"])

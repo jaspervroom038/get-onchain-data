@@ -33,6 +33,11 @@ def test_dashboard_homepage():
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert "On-Chain Metrics Dashboard" in response.text
+    assert "Macro Accumulation" in response.text
+    assert "Bottom Focus" in response.text
+    assert "Cycle-Top Context" in response.text
+    assert "Capital Flows Focus" in response.text
+    assert "Fundamentals Focus" in response.text
 
 
 def test_udf_time():
@@ -83,6 +88,22 @@ def test_udf_symbols_estimated_pricing_known():
     assert data["unit"] == "USD"
 
 
+def test_udf_symbols_macro_metric_known():
+    response = client.get("/udf/symbols", params={"symbol": "BTC.WEEKLY_RSI14"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "BTC.WEEKLY_RSI14"
+    assert data["unit"] == "index"
+
+
+def test_udf_symbols_multiplier_band_known():
+    response = client.get("/udf/symbols", params={"symbol": "BTC.TWO_YEAR_MA_X5"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "BTC.TWO_YEAR_MA_X5"
+    assert data["unit"] == "USD"
+
+
 def test_udf_symbols_unknown():
     response = client.get("/udf/symbols", params={"symbol": "UNKNOWN.SYMBOL"})
     assert response.status_code == 404
@@ -124,6 +145,20 @@ def test_metrics_list():
     data = response.json()
     assert "symbols" in data
     assert isinstance(data["symbols"], list)
+
+
+def test_bottom_gauge():
+    response = client.get("/metrics/bottom-gauge")
+    assert response.status_code == 200
+    data = response.json()
+    assert "score" in data
+    assert "max" in data
+    assert data["max"] == 4
+    assert "signals" in data
+    assert isinstance(data["score"], int)
+    assert data["score"] >= 0 and data["score"] <= 4
+    for key in ["net_flow", "puell", "mvrv_z", "nupl"]:
+        assert key in data["signals"]
 
 
 def test_metrics_latest_not_found():

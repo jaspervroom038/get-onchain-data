@@ -144,3 +144,40 @@ async def get_daily_sma(
 
     recent = sorted_days[-days:]
     return sum(daily[d] for d in recent) / days
+
+
+async def get_std_metric(
+    symbol: str,
+    db_path: Optional[str] = None,
+) -> Optional[float]:
+    """Return the population standard deviation of all values for *symbol*.
+
+    Returns ``None`` when fewer than 2 data points exist.
+    """
+    path = db_path or settings.db_path
+    async with aiosqlite.connect(path) as db:
+        cursor = await db.execute(
+            "SELECT AVG(value), COUNT(*) FROM metrics WHERE symbol = ?",
+            (symbol,),
+        )
+        row = await cursor.fetchone()
+
+    if row is None or row[0] is None or row[1] < 2:
+        return None
+
+    mean = float(row[0])
+    count = int(row[1])
+
+    # Second pass for variance (SQLite has no built-in STDDEV)
+    async with aiosqlite.connect(path) as db:
+        cursor = await db.execute(
+            "SELECT SUM((value - ?) * (value - ?)) FROM metrics WHERE symbol = ?",
+            (mean, mean, symbol),
+        )
+        var_row = await cursor.fetchone()
+
+    if var_row is None or var_row[0] is None:
+        return None
+
+    variance = float(var_row[0]) / count
+    return variance ** 0.5

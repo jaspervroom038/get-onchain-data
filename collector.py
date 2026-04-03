@@ -19,6 +19,12 @@ BTC.MINER_REVENUE      – daily miner revenue (USD)
 BTC.FEAR_GREED_INDEX   – Crypto Fear & Greed Index (0-100)
 BTC.MA200_RATIO        – BTC Price / 200-day moving average
 BTC.PI_CYCLE           – 111-day MA / (2 × 350-day MA)
+BTC.EXCHANGE_FLOW_IN   – Daily BTC inflow to exchanges (native units)
+BTC.EXCHANGE_FLOW_OUT  – Daily BTC outflow from exchanges (native units)
+BTC.EXCHANGE_NET_FLOW  – Net exchange flow (out − in; positive = bullish)
+BTC.FEE_TOTAL_USD      – Total daily transaction fees (estimated USD)
+BTC.MVRV_ZSCORE        – MVRV Z-Score (standardised deviation from mean)
+BTC.ACTIVE_ADDR_CM     – Active addresses from Coin Metrics (AdrActCnt)
 """
 
 import logging
@@ -27,7 +33,7 @@ from typing import Any, Optional
 
 import httpx
 
-from storage import get_average_metric, get_daily_sma
+from storage import get_average_metric, get_daily_sma, get_std_metric, get_history
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +95,7 @@ async def _coinmetrics_latest_row() -> dict[str, Any]:
         _COINMETRICS_TIMESERIES,
         params={
             "assets": "btc",
-            "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur",
+            "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur,FlowInExNtv,FlowOutExNtv,FeeTotNtv,AdrActCnt",
             "frequency": "1d",
             "limit_per_asset": 1,
         },
@@ -175,6 +181,27 @@ async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
         "BTC.PUELL_MULTIPLE": puell_multiple,
     }
 
+    # Exchange flows (native BTC)
+    flow_in_raw = row.get("FlowInExNtv")
+    flow_out_raw = row.get("FlowOutExNtv")
+    if flow_in_raw and flow_out_raw:
+        flow_in = float(flow_in_raw)
+        flow_out = float(flow_out_raw)
+        result["BTC.EXCHANGE_FLOW_IN"] = flow_in
+        result["BTC.EXCHANGE_FLOW_OUT"] = flow_out
+        result["BTC.EXCHANGE_NET_FLOW"] = flow_out - flow_in
+
+    # Total transaction fees (native BTC → estimated USD)
+    fee_tot_raw = row.get("FeeTotNtv")
+    if fee_tot_raw:
+        fee_tot_btc = float(fee_tot_raw)
+        result["BTC.FEE_TOTAL_USD"] = fee_tot_btc * btc_price
+
+    # Active addresses from Coin Metrics
+    adr_act_raw = row.get("AdrActCnt")
+    if adr_act_raw:
+        result["BTC.ACTIVE_ADDR_CM"] = float(adr_act_raw)
+
     return result
 
 
@@ -187,28 +214,99 @@ async def collect_fear_greed() -> dict[str, float]:
     return {"BTC.FEAR_GREED_INDEX": float(entries[0]["value"])}
 
 
+def _bucket_closes(rows: list[dict[str, float]], bucket_size: int) -> list[float]:
+    """Return last close per time bucket from ordered raw rows."""
+    buckets: dict[int, float] = {}
+    for row in rows:
+        bucket = (int(row["timestamp"]) // bucket_size) * bucket_size
+        buckets[bucket] = float(row["value"])
+    return [buckets[key] for key in sorted(buckets)]
+
+
+def _compute_wilder_rsi(closes: list[float], period: int = 14) -> Optional[float]:
+    """Compute RSI using Wilder smoothing from a series of closes."""
+    if len(closes) <= period:
+        return None
+
+    deltas = [curr - prev for prev, curr in zip(closes, closes[1:])]
+    gains = [max(delta, 0.0) for delta in deltas]
+    losses = [max(-delta, 0.0) for delta in deltas]
+
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+
+    for idx in range(period, len(deltas)):
+        avg_gain = ((avg_gain * (period - 1)) + gains[idx]) / period
+        avg_loss = ((avg_loss * (period - 1)) + losses[idx]) / period
+
+    if avg_loss == 0:
+        if avg_gain == 0:
+            return 50.0
+        return 100.0
+
+    rs = avg_gain / avg_loss
+    return 100 - (100 / (1 + rs))
+
+
+async def collect_btc_mvrv_zscore() -> dict[str, float]:
+    """Derive MVRV Z-Score from stored BTC.MVRV history.
+
+    Z = (current_MVRV − mean_MVRV) / std_MVRV
+    """
+    now_ts = int(time.time())
+    rows = await get_history("BTC.MVRV", 0, now_ts)
+    if not rows or len(rows) < 30:
+        return {}
+
+    current_mvrv = rows[-1]["value"]
+    mean_mvrv = await get_average_metric("BTC.MVRV")
+    std_mvrv = await get_std_metric("BTC.MVRV")
+
+    if mean_mvrv is None or std_mvrv is None or std_mvrv == 0:
+        return {}
+
+    z_score = (current_mvrv - mean_mvrv) / std_mvrv
+    return {"BTC.MVRV_ZSCORE": z_score}
+
+
 async def collect_btc_derived_ma() -> dict[str, float]:
     """Derive moving-average-based metrics from stored BTC.PRICE_USD history.
 
     BTC.MA200_RATIO – BTC Price / 200-day SMA
     BTC.PI_CYCLE    – 111-day SMA / (2 × 350-day SMA)
+    BTC.TWO_YEAR_MA – 730-day moving average
+    BTC.TWO_YEAR_MA_X5 – upper band for the classic 2-year MA multiplier
+    BTC.MA200W      – 200-week moving average from weekly closes
+    BTC.WEEKLY_RSI14 – weekly RSI with Wilder smoothing
     """
     now_ts = int(time.time())
     result: dict[str, float] = {}
+    history_start = max(0, now_ts - (230 * 604800))
+    rows = await get_history("BTC.PRICE_USD", history_start, now_ts)
+    latest_price = float(rows[-1]["value"]) if rows else None
 
     sma200 = await get_daily_sma("BTC.PRICE_USD", 200, to_ts=now_ts)
-    if sma200 and sma200 > 0:
-        # Fetch latest price from DB
-        from storage import get_history
-        rows = await get_history("BTC.PRICE_USD", 0, now_ts)
-        if rows:
-            latest_price = rows[-1]["value"]
-            result["BTC.MA200_RATIO"] = latest_price / sma200
+    if sma200 and sma200 > 0 and latest_price and latest_price > 0:
+        result["BTC.MA200_RATIO"] = latest_price / sma200
 
     sma111 = await get_daily_sma("BTC.PRICE_USD", 111, to_ts=now_ts)
     sma350 = await get_daily_sma("BTC.PRICE_USD", 350, to_ts=now_ts)
     if sma111 and sma350 and sma350 > 0:
         result["BTC.PI_CYCLE"] = sma111 / (2 * sma350)
+
+    two_year_ma = await get_daily_sma("BTC.PRICE_USD", 730, to_ts=now_ts)
+    if two_year_ma and two_year_ma > 0:
+        result["BTC.TWO_YEAR_MA"] = two_year_ma
+        result["BTC.TWO_YEAR_MA_X5"] = two_year_ma * 5
+
+    if rows:
+        weekly_closes = _bucket_closes(rows, 604800)
+        if len(weekly_closes) >= 200:
+            result["BTC.MA200W"] = sum(weekly_closes[-200:]) / 200
+
+        weekly_rsi = _compute_wilder_rsi(weekly_closes[-60:], period=14)
+        if weekly_rsi is not None:
+            result["BTC.WEEKLY_RSI14"] = weekly_rsi
 
     return result
 
@@ -228,6 +326,7 @@ async def collect_all() -> dict[str, float]:
         ("Coin Metrics BTC", collect_btc_coinmetrics_pricing),
         ("Fear & Greed Index", collect_fear_greed),
         ("BTC derived MA", collect_btc_derived_ma),
+        ("BTC MVRV Z-Score", collect_btc_mvrv_zscore),
     ]
 
     for name, collector in collectors:

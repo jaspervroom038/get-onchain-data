@@ -53,6 +53,26 @@
       backdrop-filter: blur(12px);
     }
     .hero-top { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+    .tab-nav {
+      display: flex; gap: 0.45rem; margin-top: 0.7rem; flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      padding-inline: 0.9rem;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      color: #042415;
+      border-color: var(--accent-soft);
+      background: linear-gradient(120deg,#2fb07a,#58db98);
+      box-shadow: 0 0 0 1px rgba(88,219,152,0.18), 0 8px 24px rgba(0,0,0,0.18);
+    }
+    .tab-btn:focus-visible {
+      outline: 2px solid rgba(85,255,179,0.55);
+      outline-offset: 2px;
+    }
     h1 {
       font-size: 1.15rem; letter-spacing: 0.04em;
       font-family: "Share Tech Mono", monospace;
@@ -63,6 +83,13 @@
     .controls { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin-left: auto; }
     .summary {
       display: flex; gap: 0.7rem; margin-top: 0.5rem; flex-wrap: wrap;
+    }
+    .summary.hidden { display: none; }
+    .focus-summary {
+      display: flex; gap: 0.7rem; margin-top: 0.55rem; flex-wrap: wrap;
+    }
+    .focus-copy {
+      margin-top: 0.45rem; color: var(--muted); font-size: 0.76rem; line-height: 1.55;
     }
     .tile {
       border: 1px solid var(--line); border-radius: 10px;
@@ -79,6 +106,7 @@
     }
     input { min-width: 170px; }
     input::placeholder { color: #5f8a7a; }
+    .control-hidden { display: none !important; }
     button {
       border-color: var(--accent-soft);
       background: linear-gradient(120deg,#2fb07a,#58db98);
@@ -100,6 +128,65 @@
       text-transform: uppercase; color: var(--accent);
       margin-bottom: 0.6rem;
     }
+    .info-label {
+      display: inline-flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .info-trigger {
+      width: 1.05rem; height: 1.05rem; min-width: 1.05rem;
+      padding: 0; border-radius: 999px;
+      border: 1px solid rgba(85,255,179,0.35);
+      background: rgba(10,31,23,0.92);
+      color: var(--accent);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.66rem; font-weight: 700; line-height: 1;
+      cursor: pointer; box-shadow: none;
+    }
+    .info-trigger:hover,
+    .info-trigger:focus-visible {
+      background: rgba(85,255,179,0.12);
+      border-color: var(--accent-soft);
+      color: var(--ink);
+      outline: none;
+    }
+    .info-popover {
+      position: fixed; top: 0; left: 0; z-index: 120;
+      width: min(340px, calc(100vw - 24px));
+      border: 1px solid var(--line); border-radius: 14px;
+      padding: 0.75rem 0.85rem;
+      background: linear-gradient(180deg,rgba(13,36,27,0.98),rgba(10,29,22,0.98));
+      box-shadow: 0 16px 36px rgba(0,0,0,0.45);
+      display: none;
+    }
+    .info-popover.open { display: block; }
+    .info-popover-header {
+      display: flex; justify-content: space-between; gap: 0.6rem; align-items: flex-start;
+      margin-bottom: 0.45rem;
+    }
+    .info-popover-title {
+      color: var(--accent); font-family: "Share Tech Mono", monospace;
+      font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .info-popover-copy {
+      color: var(--muted); font-size: 0.76rem; line-height: 1.6;
+    }
+    .info-popover-copy strong { color: var(--ink); }
+    .info-popover-close {
+      width: 1.5rem; height: 1.5rem; min-width: 1.5rem;
+      border-radius: 999px; padding: 0;
+      border: 1px solid var(--line);
+      background: rgba(10,31,23,0.92);
+      color: var(--muted);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.82rem; box-shadow: none;
+    }
+    .info-popover-close:hover,
+    .info-popover-close:focus-visible {
+      border-color: var(--accent-soft);
+      color: var(--ink);
+      outline: none;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     /* ── Main Chart ── */
     .main-chart-header { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem; }
@@ -165,6 +252,244 @@
     td, th { border-bottom: 1px solid var(--line); padding: 0.22rem 0.3rem; text-align: left; }
     .status { margin-top: 0.5rem; color: var(--muted); font-size: 0.78rem; }
 
+    /* ── Macro Tab ── */
+    .macro-hero {
+      display: grid; grid-template-columns: minmax(0,1.7fr) minmax(280px,1fr);
+      gap: 0.8rem; align-items: stretch;
+    }
+    .macro-headline {
+      font-size: clamp(1.35rem, 2.4vw, 2rem);
+      line-height: 1.08; color: var(--ink); margin-bottom: 0.6rem;
+    }
+    .macro-copy {
+      color: var(--muted); font-size: 0.92rem; max-width: 70ch; line-height: 1.55;
+    }
+    .macro-state {
+      border: 1px solid var(--line); border-radius: 14px;
+      padding: 0.85rem 0.95rem;
+      background: linear-gradient(180deg,rgba(16,43,32,0.95),rgba(11,29,22,0.95));
+      display: flex; flex-direction: column; gap: 0.55rem;
+      min-height: 100%;
+    }
+    .macro-state[data-level="watch"] { border-color: #4b6d61; }
+    .macro-state[data-level="build"] { border-color: var(--accent-soft); }
+    .macro-state[data-level="accelerate"] { border-color: var(--warn); }
+    .macro-state-label {
+      color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .macro-state-title {
+      font-size: 1.35rem; font-family: "Share Tech Mono", monospace; color: var(--accent);
+    }
+    .macro-state[data-level="accelerate"] .macro-state-title { color: var(--warn); }
+    .macro-state-copy {
+      color: var(--ink); font-size: 0.84rem; line-height: 1.55;
+    }
+    .mini-stat-row {
+      display: flex; justify-content: space-between; gap: 0.6rem;
+      border-top: 1px dashed var(--line); padding-top: 0.5rem;
+      font-size: 0.75rem;
+    }
+    .mini-stat-label { color: var(--muted); }
+    .mini-stat-value {
+      color: var(--ink); font-family: "Share Tech Mono", monospace;
+    }
+    .macro-pillars {
+      display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+      gap: 0.6rem; margin-top: 0.8rem;
+    }
+    .macro-pillar {
+      border: 1px solid var(--line); border-radius: 12px;
+      padding: 0.75rem; background: rgba(12,31,24,0.72);
+    }
+    .macro-pillar-label {
+      color: var(--accent); font-family: "Share Tech Mono", monospace;
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 0.45rem;
+    }
+    .macro-pillar-copy {
+      color: var(--muted); font-size: 0.8rem; line-height: 1.55;
+    }
+    .macro-kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 0.6rem;
+    }
+    .macro-trend-grid {
+      display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 0.6rem; margin-top: 0.75rem;
+    }
+    .macro-trend-tile {
+      border: 1px solid var(--line); border-radius: 12px;
+      padding: 0.65rem 0.75rem; background: rgba(12,31,24,0.72);
+      display: flex; flex-direction: column; gap: 0.28rem;
+    }
+    .macro-trend-label {
+      color: var(--muted); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .macro-trend-value {
+      color: var(--ink); font-size: 1rem; font-family: "Share Tech Mono", monospace;
+    }
+    .macro-trend-copy {
+      color: var(--muted); font-size: 0.74rem; line-height: 1.5;
+    }
+    .macro-chart-note {
+      margin-top: 0.55rem; color: var(--muted); font-size: 0.74rem; line-height: 1.5;
+    }
+    .macro-presets {
+      display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.65rem;
+    }
+    .macro-preset-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      padding: 0.3rem 0.7rem;
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+    .macro-preset-btn.active {
+      color: #042415;
+      border-color: var(--accent-soft);
+      background: linear-gradient(120deg,#2fb07a,#58db98);
+    }
+    .macro-preset-copy {
+      color: var(--muted); font-size: 0.74rem; line-height: 1.5; margin-bottom: 0.7rem;
+    }
+    .macro-kpi {
+      border: 1px solid var(--line); border-radius: 12px;
+      padding: 0.75rem; background: rgba(12,31,24,0.78);
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .macro-kpi[data-level="active"] { border-color: var(--accent-soft); }
+    .macro-kpi[data-level="watch"] { border-color: var(--warn); }
+    .macro-kpi[data-level="idle"] { border-color: #3d5b4e; }
+    .macro-kpi-top {
+      display: flex; justify-content: space-between; gap: 0.4rem; align-items: center;
+    }
+    .macro-kpi-label {
+      color: var(--muted); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .macro-chip {
+      border-radius: 999px; padding: 0.18rem 0.5rem; font-size: 0.66rem;
+      letter-spacing: 0.04em; text-transform: uppercase; font-weight: 700;
+      border: 1px solid var(--line); white-space: nowrap;
+    }
+    .macro-chip.active {
+      color: #042415; background: linear-gradient(120deg,#2fb07a,#58db98); border-color: var(--accent-soft);
+    }
+    .macro-chip.watch {
+      color: #3a2403; background: rgba(255,193,107,0.92); border-color: rgba(255,193,107,0.6);
+    }
+    .macro-chip.idle {
+      color: var(--muted); background: rgba(18,42,32,0.85); border-color: #3d5b4e;
+    }
+    .macro-kpi-value {
+      font-size: 1.2rem; color: var(--ink); font-family: "Share Tech Mono", monospace;
+    }
+    .macro-kpi-sub, .macro-kpi-threshold, .macro-kpi-note {
+      color: var(--muted); font-size: 0.74rem; line-height: 1.5;
+    }
+    .macro-kpi-note { color: #bfe9d4; }
+    .macro-matrix-wrap {
+      overflow-x: auto; border: 1px solid var(--line); border-radius: 12px;
+      background: rgba(7,22,16,0.76);
+    }
+    .macro-matrix {
+      width: 100%; border-collapse: collapse; min-width: 760px; font-size: 0.76rem;
+    }
+    .macro-chart-container { position: relative; width: 100%; height: 360px; }
+    .macro-matrix th, .macro-matrix td {
+      padding: 0.55rem 0.6rem; border-bottom: 1px solid rgba(36,85,64,0.65); vertical-align: top;
+    }
+    .macro-matrix th {
+      color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+      background: rgba(12,31,24,0.9);
+    }
+    .macro-matrix tr:last-child td { border-bottom: none; }
+    .macro-footnote {
+      margin-top: 0.7rem; color: var(--muted); font-size: 0.76rem; line-height: 1.55;
+    }
+    .macro-notes {
+      display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 0.6rem;
+    }
+    .macro-note-card {
+      border: 1px solid var(--line); border-radius: 12px;
+      padding: 0.8rem; background: rgba(12,31,24,0.72);
+    }
+    .macro-note-card h3 {
+      color: var(--ink); font-size: 0.95rem; margin-bottom: 0.45rem;
+    }
+    .macro-note-card p {
+      color: var(--muted); font-size: 0.8rem; line-height: 1.6;
+    }
+    .macro-note-card ul {
+      margin: 0.35rem 0 0 1rem; color: var(--muted); font-size: 0.8rem; line-height: 1.6;
+    }
+
+    /* ── Deep Analysis ── */
+    .da-gauge-wrap {
+      display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .da-gauge {
+      width: 120px; height: 120px; border-radius: 50%;
+      border: 4px solid var(--line);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: border-color 0.4s, box-shadow 0.4s;
+    }
+    .da-gauge[data-level="0"], .da-gauge[data-level="1"] {
+      border-color: var(--red); box-shadow: 0 0 18px rgba(248,113,113,0.25);
+    }
+    .da-gauge[data-level="2"] {
+      border-color: var(--yellow); box-shadow: 0 0 18px rgba(251,191,36,0.25);
+    }
+    .da-gauge[data-level="3"], .da-gauge[data-level="4"] {
+      border-color: var(--green); box-shadow: 0 0 18px rgba(74,222,128,0.25);
+    }
+    .da-gauge-score {
+      font-size: 2.2rem; font-family: "Share Tech Mono", monospace;
+      color: var(--ink); line-height: 1;
+    }
+    .da-gauge-label { color: var(--muted); font-size: 0.76rem; }
+    .da-gauge-signals { display: flex; flex-direction: column; gap: 0.4rem; }
+    .da-signal-item {
+      display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: var(--muted);
+    }
+    .da-sig-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: var(--line);
+      flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s;
+    }
+    .da-signal-item[data-on="true"] .da-sig-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .da-signal-item[data-on="true"] .da-sig-name { color: var(--ink); }
+    .da-signal-item[data-on="false"] .da-sig-dot { background: var(--red); box-shadow: 0 0 4px var(--red); }
+    .da-signal-item[data-on="null"] .da-sig-dot { background: var(--line); }
+
+    .da-badge {
+      display: inline-block; font-size: 0.6rem; border: 1px solid var(--accent-soft);
+      color: var(--accent); border-radius: 999px; padding: 0.1rem 0.5rem;
+      vertical-align: middle; margin-left: 0.4rem; letter-spacing: 0.04em;
+    }
+    .da-chart-card {
+      margin-top: 0.8rem; border: 1px solid var(--line); border-radius: 12px;
+      padding: 0.75rem; background: rgba(12,31,24,0.72);
+    }
+    .da-chart-label {
+      color: var(--ink); font-size: 0.88rem; font-weight: 600; margin-bottom: 0.2rem;
+    }
+    .da-chart-hint { color: var(--muted); font-size: 0.72rem; margin-bottom: 0.5rem; }
+    .da-chart-hint.da-premium { color: var(--warn); }
+    .da-chart-box { position: relative; width: 100%; height: 260px; }
+    .da-chart-box.da-placeholder {
+      display: flex; align-items: center; justify-content: center;
+      border: 2px dashed var(--line); border-radius: 8px;
+      color: var(--muted); font-size: 0.82rem; font-style: italic;
+    }
+    .da-divergence-badge {
+      display: inline-block; background: rgba(74,222,128,0.15); border: 1px solid var(--green);
+      color: var(--green); border-radius: 8px; padding: 0.3rem 0.7rem;
+      font-size: 0.76rem; font-weight: 600; margin-bottom: 0.5rem;
+    }
+    .analysis-focus-hidden { display: none; }
+    .analysis-focus-active {
+      border-color: var(--accent-soft);
+      box-shadow: 0 0 0 1px rgba(88,219,152,0.18), 0 6px 20px rgba(0,0,0,0.18);
+    }
+
     /* ── Reset Zoom ── */
     .reset-zoom-btn {
       font-size: 0.68rem; padding: 0.2rem 0.55rem;
@@ -206,6 +531,11 @@
       .controls { width: 100%; }
       input { min-width: 100%; }
       .modal-chart { height: 300px; }
+      .tab-nav { width: 100%; }
+      .tab-btn { flex: 1 1 160px; justify-content: center; }
+      .macro-hero { grid-template-columns: 1fr; }
+      .macro-chart-container { height: 260px; }
+      .macro-matrix { min-width: 640px; }
     }
   </style>
 </head>
@@ -246,47 +576,262 @@
         <button id="refresh">Refresh</button>
       </div>
     </div>
-    <div class="summary">
+    <div class="tab-nav" role="tablist" aria-label="Dashboard views">
+      <button class="tab-btn active" id="tab-dashboard" data-view="dashboard" role="tab" aria-selected="true">Dashboard</button>
+      <button class="tab-btn" id="tab-macro" data-view="macro" role="tab" aria-selected="false">Macro Accumulation</button>
+      <button class="tab-btn" id="tab-analysis" data-view="analysis" role="tab" aria-selected="false">Deep Analysis</button>
+    </div>
+    <div class="summary" id="summaryRow">
       <div class="tile"><span class="tile-label">Symbols</span><span class="tile-value" id="sum-total">-</span></div>
       <div class="tile"><span class="tile-label">BTC</span><span class="tile-value" id="sum-btc">-</span></div>
       <div class="tile"><span class="tile-label">ETH</span><span class="tile-value" id="sum-eth">-</span></div>
       <div class="tile"><span class="tile-label">Refresh</span><span class="tile-value" id="sum-refresh">-</span></div>
     </div>
+    <div class="focus-summary" id="focusSummaryRow">
+      <div class="tile"><span class="tile-label">View</span><span class="tile-value" id="focusView">Dashboard</span></div>
+      <div class="tile"><span class="tile-label">Lens</span><span class="tile-value" id="focusLens">Overview</span></div>
+      <div class="tile"><span class="tile-label">Readout</span><span class="tile-value" id="focusReadout">Loading</span></div>
+    </div>
+    <p class="focus-copy" id="focusCopy">Track live on-chain metrics, bottom signals, and price-band context from one sticky header.</p>
   </section>
 
-  <!-- ── Main BTC Chart ── -->
-  <section class="section">
-    <div class="main-chart-header">
-      <span class="section-title">BTC Price · Realized · Balanced</span>
-      <div class="legend">
-        <div class="legend-item" data-ds="0"><div class="legend-dot" style="background:#5dffba"></div>Price</div>
-        <div class="legend-item" data-ds="1"><div class="legend-dot" style="background:#3dd6b5"></div>Realized</div>
-        <div class="legend-item" data-ds="2"><div class="legend-dot" style="background:#ffc16b"></div>Balanced (EST)</div>
+  <div class="tab-panel active" id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
+    <!-- ── Main BTC Chart ── -->
+    <section class="section">
+      <div class="main-chart-header">
+        <span class="section-title"><span class="info-label">BTC Price · Realized · Balanced <button class="info-trigger" type="button" data-info-key="dashboard-main-chart" aria-label="Explain BTC price bands">i</button></span></span>
+        <div class="legend">
+          <div class="legend-item" data-ds="0"><div class="legend-dot" style="background:#5dffba"></div>Price</div>
+          <div class="legend-item" data-ds="1"><div class="legend-dot" style="background:#3dd6b5"></div>Realized</div>
+          <div class="legend-item" data-ds="2"><div class="legend-dot" style="background:#ffc16b"></div>Balanced (EST)</div>
+        </div>
+        <button class="reset-zoom-btn" id="resetZoom" title="Reset zoom">Reset Zoom</button>
       </div>
-      <button class="reset-zoom-btn" id="resetZoom" title="Reset zoom">Reset Zoom</button>
-    </div>
-    <div class="chart-container"><canvas id="mainChart"></canvas></div>
-  </section>
+      <div class="chart-container"><canvas id="mainChart"></canvas></div>
+    </section>
 
-  <!-- ── Bottom Detection Signals ── -->
-  <section class="section" id="bottomSection">
-    <div class="section-title">Bottom Detection Signals</div>
-    <div class="signals-grid" id="signals">
-      <div class="signal-tile" id="sig-nupl"><div class="signal-name">NUPL</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; -0.5 capitulation</div></div>
-      <div class="signal-tile" id="sig-puell"><div class="signal-name">Puell Multiple</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 0.5 bottom zone</div></div>
-      <div class="signal-tile" id="sig-ma200"><div class="signal-name">Price / 200d MA</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 0.8 bottom zone</div></div>
-      <div class="signal-tile" id="sig-pi"><div class="signal-name">Pi Cycle</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 0.5 bottom zone</div></div>
-      <div class="signal-tile" id="sig-fg"><div class="signal-name">Fear &amp; Greed</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 20 extreme fear</div></div>
-    </div>
-  </section>
+    <!-- ── Bottom Detection Signals ── -->
+    <section class="section" id="bottomSection">
+      <div class="section-title"><span class="info-label">Bottom Detection Signals <button class="info-trigger" type="button" data-info-key="dashboard-bottom-signals" aria-label="Explain bottom detection signals">i</button></span></div>
+      <div class="signals-grid" id="signals">
+        <div class="signal-tile" id="sig-nupl"><div class="signal-name"><span class="info-label">NUPL <button class="info-trigger" type="button" data-info-key="sym:BTC.NUPL" aria-label="Explain NUPL">i</button></span></div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; -0.5 capitulation</div></div>
+        <div class="signal-tile" id="sig-puell"><div class="signal-name"><span class="info-label">Puell Multiple <button class="info-trigger" type="button" data-info-key="sym:BTC.PUELL_MULTIPLE" aria-label="Explain Puell Multiple">i</button></span></div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 0.5 bottom zone</div></div>
+        <div class="signal-tile" id="sig-ma200"><div class="signal-name"><span class="info-label">Price / 200d MA <button class="info-trigger" type="button" data-info-key="sym:BTC.MA200_RATIO" aria-label="Explain price over 200-day moving average">i</button></span></div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 0.8 bottom zone</div></div>
+        <div class="signal-tile" id="sig-pi"><div class="signal-name"><span class="info-label">Pi Cycle <button class="info-trigger" type="button" data-info-key="sym:BTC.PI_CYCLE" aria-label="Explain Pi Cycle">i</button></span></div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 0.5 bottom zone</div></div>
+        <div class="signal-tile" id="sig-fg"><div class="signal-name"><span class="info-label">Fear &amp; Greed <button class="info-trigger" type="button" data-info-key="sym:BTC.FEAR_GREED_INDEX" aria-label="Explain Fear and Greed">i</button></span></div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 20 extreme fear</div></div>
+      </div>
+    </section>
 
-  <!-- ── Metric Cards ── -->
-  <section class="section">
-    <div class="section-title" id="cardsTitle">All Metrics</div>
-    <div class="grid" id="cards"></div>
-    <div class="status" id="status">Loading…</div>
-  </section>
+    <!-- ── Metric Cards ── -->
+    <section class="section">
+      <div class="section-title"><span class="info-label"><span id="cardsTitle">All Metrics</span> <button class="info-trigger" type="button" data-info-key="dashboard-metrics" aria-label="Explain metric cards">i</button></span></div>
+      <div class="grid" id="cards"></div>
+      <div class="status" id="status">Loading…</div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="panel-macro" role="tabpanel" aria-labelledby="tab-macro">
+    <section class="section">
+      <div class="macro-hero">
+        <div>
+          <div class="section-title"><span class="info-label">Macro Accumulation <button class="info-trigger" type="button" data-info-key="macro-overview" aria-label="Explain macro accumulation view">i</button></span></div>
+          <h2 class="macro-headline">Live Bitcoin framework for value zones, capitulation, and DCA acceleration</h2>
+          <p class="macro-copy">This tab turns the requested macro architecture into a compact phase-one execution layer. It combines valuation, behavior, miner stress, and structural timing using only the live metrics that already exist in this codebase. Anything not yet collected stays explicitly outside the action layer.</p>
+        </div>
+        <aside class="macro-state" id="macroState" data-level="watch">
+          <div class="macro-state-label">Action State</div>
+          <div class="macro-state-title" id="macroStateTitle">Loading…</div>
+          <p class="macro-state-copy" id="macroStateCopy">Loading live proxy signals.</p>
+          <div class="mini-stat-row"><span class="mini-stat-label">Model Score</span><span class="mini-stat-value" id="macroStateScore">- / 11</span></div>
+        </aside>
+      </div>
+      <div class="macro-trend-grid" id="macroTrendGrid"></div>
+      <div class="macro-pillars">
+        <article class="macro-pillar">
+          <div class="macro-pillar-label">1. Valuation &amp; Fair Value</div>
+          <p class="macro-pillar-copy">Realized Price, MVRV, Balanced Price, and Delta Price answer whether spot is trading below on-chain cost basis and whether the market is entering a deep value zone.</p>
+        </article>
+        <article class="macro-pillar">
+          <div class="macro-pillar-label">2. Behavior &amp; Conviction</div>
+          <p class="macro-pillar-copy">NUPL and Fear &amp; Greed measure whether loss aversion, apathy, and capitulation dominate. In phase one, Reserve Risk and ATS remain out of the live layer until the collector supports them.</p>
+        </article>
+        <article class="macro-pillar">
+          <div class="macro-pillar-label">3. Miner Economy</div>
+          <p class="macro-pillar-copy">Puell Multiple detects whether miner revenue is under heavy pressure. A drop below 0.5 marks the classic washout that often appears before macro bottoms.</p>
+        </article>
+        <article class="macro-pillar">
+          <div class="macro-pillar-label">4. Structure &amp; Timing</div>
+          <p class="macro-pillar-copy">Price / 200d MA, 2-Year MA, 200-Week MA, and Weekly RSI are already live. Reserve Risk, aSOPR, ATS, and Anchored VWAP remain future extensions.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="main-chart-header">
+        <span class="section-title"><span class="info-label">BTC Macro Price Bands <button class="info-trigger" type="button" data-info-key="macro-price-bands" aria-label="Explain macro price bands">i</button></span></span>
+        <div class="legend">
+          <div class="legend-item" data-macro-ds="0"><div class="legend-dot" style="background:#5dffba"></div>Price</div>
+          <div class="legend-item" data-macro-ds="1"><div class="legend-dot" style="background:#3dd6b5"></div>Realized</div>
+          <div class="legend-item" data-macro-ds="2"><div class="legend-dot" style="background:#ffc16b"></div>Balanced</div>
+          <div class="legend-item" data-macro-ds="3"><div class="legend-dot" style="background:#ff8f7d"></div>Delta</div>
+          <div class="legend-item" data-macro-ds="4"><div class="legend-dot" style="background:#8ab4ff"></div>2Y MA</div>
+          <div class="legend-item" data-macro-ds="5"><div class="legend-dot" style="background:#f472b6"></div>200W MA</div>
+          <div class="legend-item inactive" data-macro-ds="6"><div class="legend-dot" style="background:#94a3b8"></div>2Y MA × 5</div>
+        </div>
+      </div>
+      <div class="macro-presets" role="toolbar" aria-label="Macro chart presets">
+        <button class="macro-preset-btn active" data-macro-preset="context">Full Context</button>
+        <button class="macro-preset-btn" data-macro-preset="bottom">Bottom Focus</button>
+        <button class="macro-preset-btn" data-macro-preset="structure">Structure Focus</button>
+        <button class="macro-preset-btn" data-macro-preset="cycle">Cycle-Top Context</button>
+      </div>
+      <p class="macro-preset-copy" id="macroPresetCopy">Full context combines value bands, structural support, and the cycle ceiling in one view.</p>
+      <div class="macro-chart-container"><canvas id="macroChart"></canvas></div>
+      <p class="macro-chart-note">The chart marks the deep-value band between Delta and Realized, the support zone between the 2-Year MA and 200-Week MA, and a regime badge for the current macro state.</p>
+    </section>
+
+    <section class="section">
+      <div class="section-title"><span class="info-label">Live Macro Signals <button class="info-trigger" type="button" data-info-key="macro-live-signals" aria-label="Explain live macro signals">i</button></span></div>
+      <div class="macro-kpi-grid" id="macroSignals"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-title"><span class="info-label">Action Matrix <button class="info-trigger" type="button" data-info-key="macro-action-matrix" aria-label="Explain macro action matrix">i</button></span></div>
+      <div class="macro-matrix-wrap">
+        <table class="macro-matrix">
+          <thead>
+            <tr>
+              <th>Signal</th>
+              <th>Current</th>
+              <th>Threshold</th>
+              <th>Status</th>
+              <th>Read</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="macroMatrixBody"></tbody>
+        </table>
+      </div>
+      <p class="macro-footnote" id="macroProxyNote">Phase one uses only existing live metrics and labels every proxy signal explicitly as a proxy.</p>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Phase 1 Interpretation</div>
+      <div class="macro-notes">
+        <article class="macro-note-card">
+          <h3>Three operating phases</h3>
+          <p>The first layer looks for structural undervaluation through Realized Price and MVRV. Then it validates capitulation through NUPL, Puell, sentiment, and trend weakness. When multiple layers align, the model moves from observing to accumulating and then to accelerated DCA.</p>
+        </article>
+        <article class="macro-note-card">
+          <h3>Not live in phase 1</h3>
+          <p>Reserve Risk, Accumulation Trend Score, aSOPR, and Anchored VWAP are still missing from the current collector and endpoint layer. This tab uses only available live metrics or clearly labeled proxies.</p>
+        </article>
+      </div>
+      <div class="status" id="macroStatus">Loading macro signals…</div>
+    </section>
+  </div>
+
+  <!-- ══════════ Deep Analysis Panel ══════════ -->
+  <div class="tab-panel" id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis">
+
+    <section class="section">
+      <div class="section-title">Analysis Focus</div>
+      <div class="macro-presets" role="toolbar" aria-label="Deep analysis presets">
+        <button class="macro-preset-btn active" data-analysis-preset="overview">Overview</button>
+        <button class="macro-preset-btn" data-analysis-preset="flows">Capital Flows Focus</button>
+        <button class="macro-preset-btn" data-analysis-preset="fundamentals">Fundamentals Focus</button>
+        <button class="macro-preset-btn" data-analysis-preset="bottom">Bottom Signals Focus</button>
+      </div>
+      <p class="macro-preset-copy" id="analysisPresetCopy">Overview shows every analysis module at once.</p>
+    </section>
+
+    <!-- Bottom Gauge -->
+    <section class="section analysis-section" id="analysis-section-gauge" data-analysis-section="gauge">
+      <div class="section-title"><span class="info-label">Bottom Gauge — Confluence Score <button class="info-trigger" type="button" data-info-key="analysis-bottom-gauge" aria-label="Explain bottom gauge">i</button></span></div>
+      <div class="da-gauge-wrap" id="daGaugeWrap">
+        <div class="da-gauge" id="daGauge">
+          <div class="da-gauge-score" id="daGaugeScore">-</div>
+          <div class="da-gauge-label">/ 4</div>
+        </div>
+        <div class="da-gauge-signals" id="daGaugeSignals">
+          <div class="da-signal-item" id="dag-net_flow"><span class="da-sig-dot"></span><span class="da-sig-name"><span class="info-label">Net Flow &lt; 0 <button class="info-trigger" type="button" data-info-key="analysis-net-flow-signal" aria-label="Explain net flow signal">i</button></span></span></div>
+          <div class="da-signal-item" id="dag-puell"><span class="da-sig-dot"></span><span class="da-sig-name"><span class="info-label">Puell &lt; 0.5 <button class="info-trigger" type="button" data-info-key="analysis-puell-signal" aria-label="Explain Puell signal">i</button></span></span></div>
+          <div class="da-signal-item" id="dag-mvrv_z"><span class="da-sig-dot"></span><span class="da-sig-name"><span class="info-label">MVRV Z &lt; 0 <button class="info-trigger" type="button" data-info-key="analysis-mvrv-z-signal" aria-label="Explain MVRV Z signal">i</button></span></span></div>
+          <div class="da-signal-item" id="dag-nupl"><span class="da-sig-dot"></span><span class="da-sig-name"><span class="info-label">NUPL &lt; 0 <button class="info-trigger" type="button" data-info-key="analysis-nupl-signal" aria-label="Explain NUPL signal">i</button></span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: Nansen-style — Entities & Capital Flows -->
+    <section class="section analysis-section" id="analysis-section-flows" data-analysis-section="flows">
+      <div class="section-title">1 · Entities &amp; Capital Flows <span class="da-badge">Nansen-style</span></div>
+
+      <div class="da-chart-card">
+        <div class="da-chart-label"><span class="info-label">Exchange Net Flows (Inflow vs. Outflow) <button class="info-trigger" type="button" data-info-key="analysis-net-flows" aria-label="Explain exchange net flows">i</button></span></div>
+        <div class="da-chart-hint">Green = net outflow (bullish) · Red = net inflow (bearish)</div>
+        <div class="da-chart-box"><canvas id="daExFlowChart"></canvas></div>
+      </div>
+
+      <div class="da-chart-card">
+        <div class="da-chart-label"><span class="info-label">Whale Cohort Accumulation (&gt;1,000 BTC) <button class="info-trigger" type="button" data-info-key="analysis-whales" aria-label="Explain whale accumulation">i</button></span></div>
+        <div class="da-chart-hint da-premium">Premium API required — not available in the free CoinMetrics tier.</div>
+        <div class="da-chart-box da-placeholder"><span>SplyAdrBalNtv1K — available with a paid API key</span></div>
+      </div>
+
+      <div class="da-chart-card">
+        <div class="da-chart-label"><span class="info-label">Puell Multiple — Miner Capitulation <button class="info-trigger" type="button" data-info-key="sym:BTC.PUELL_MULTIPLE" aria-label="Explain Puell Multiple">i</button></span></div>
+        <div class="da-chart-hint">Green zone (&lt;0.5) = miner capitulation, historically a buy signal</div>
+        <div class="da-chart-box"><canvas id="daPuellChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Section 2: Token Terminal-style — Network Fundamentals -->
+    <section class="section analysis-section" id="analysis-section-fundamentals" data-analysis-section="fundamentals">
+      <div class="section-title">2 · Network Fundamentals <span class="da-badge">Token Terminal-style</span></div>
+
+      <div class="da-chart-card">
+        <div class="da-chart-label"><span class="info-label">Active Addresses Divergence <button class="info-trigger" type="button" data-info-key="analysis-active-addresses" aria-label="Explain active addresses divergence">i</button></span></div>
+        <div class="da-chart-hint">Divergence signal: addresses up while price falls = bullish</div>
+        <div class="da-divergence-badge" id="daDivBadge" style="display:none;">Bullish Divergence</div>
+        <div class="da-chart-box"><canvas id="daAddrChart"></canvas></div>
+      </div>
+
+      <div class="da-chart-card">
+        <div class="da-chart-label"><span class="info-label">Transaction Fees &amp; Blockspace Demand <button class="info-trigger" type="button" data-info-key="analysis-fees" aria-label="Explain transaction fees and blockspace demand">i</button></span></div>
+        <div class="da-chart-hint">A sudden rise in fees can lead broader market activity</div>
+        <div class="da-chart-box"><canvas id="daFeesChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Section 3: On-Chain Bottom Indicators -->
+    <section class="section analysis-section" id="analysis-section-bottom" data-analysis-section="bottom">
+      <div class="section-title">3 · On-Chain Bottom Indicators <span class="da-badge">Classic</span></div>
+
+      <div class="da-chart-card">
+        <div class="da-chart-label"><span class="info-label">MVRV Z-Score <button class="info-trigger" type="button" data-info-key="sym:BTC.MVRV_ZSCORE" aria-label="Explain MVRV Z-Score">i</button></span></div>
+        <div class="da-chart-hint">Zone below 0 = the market is underwater on aggregate — classic deep-value territory</div>
+        <div class="da-chart-box"><canvas id="daMvrvZChart"></canvas></div>
+      </div>
+
+      <div class="da-chart-card">
+        <div class="da-chart-label"><span class="info-label">NUPL (aSOPR Proxy) <button class="info-trigger" type="button" data-info-key="sym:BTC.NUPL" aria-label="Explain NUPL">i</button></span></div>
+        <div class="da-chart-hint">NUPL &lt; 0 = net unrealized losses dominate — peak capitulation behavior</div>
+        <div class="da-chart-box"><canvas id="daNuplChart"></canvas></div>
+      </div>
+    </section>
+
+    <div class="status" id="analysisStatus">Loading Deep Analysis…</div>
+  </div>
 </main>
+
+<div class="info-popover" id="infoPopover" role="dialog" aria-modal="false" aria-live="polite">
+  <div class="info-popover-header">
+    <div class="info-popover-title" id="infoPopoverTitle">Indicator</div>
+    <button class="info-popover-close" id="infoPopoverClose" type="button" aria-label="Close explanation">&times;</button>
+  </div>
+  <p class="info-popover-copy"><strong>What it is:</strong> <span id="infoPopoverWhat"></span></p>
+  <p class="info-popover-copy"><strong>Example:</strong> <span id="infoPopoverExample"></span></p>
+</div>
 
 <!-- ── Expand Modal ── -->
 <div class="modal-overlay" id="modal">
@@ -316,9 +861,16 @@
   var sumBtcEl   = document.getElementById("sum-btc");
   var sumEthEl   = document.getElementById("sum-eth");
   var sumRefreshEl = document.getElementById("sum-refresh");
+  var summaryEl  = document.getElementById("summaryRow");
+  var focusViewEl = document.getElementById("focusView");
+  var focusLensEl = document.getElementById("focusLens");
+  var focusReadoutEl = document.getElementById("focusReadout");
+  var focusCopyEl = document.getElementById("focusCopy");
   var cardsTitleEl = document.getElementById("cardsTitle");
   var mainCanvas = document.getElementById("mainChart");
   var mainChartInstance = null;
+  var macroCanvas = document.getElementById("macroChart");
+  var macroChartInstance = null;
   var chainEl    = document.getElementById("chain");
   var resetZoomEl = document.getElementById("resetZoom");
   var modalEl    = document.getElementById("modal");
@@ -326,15 +878,50 @@
   var modalCloseEl = document.getElementById("modalClose");
   var modalCanvas = document.getElementById("modalCanvas");
   var modalChartInstance = null;
+  var infoPopoverEl = document.getElementById("infoPopover");
+  var infoPopoverTitleEl = document.getElementById("infoPopoverTitle");
+  var infoPopoverWhatEl = document.getElementById("infoPopoverWhat");
+  var infoPopoverExampleEl = document.getElementById("infoPopoverExample");
+  var infoPopoverCloseEl = document.getElementById("infoPopoverClose");
+  var dashboardPanelEl = document.getElementById("panel-dashboard");
+  var macroPanelEl = document.getElementById("panel-macro");
+  var analysisPanelEl = document.getElementById("panel-analysis");
+  var tabButtons = Array.from(document.querySelectorAll(".tab-btn[data-view]"));
+  var macroSignalsEl = document.getElementById("macroSignals");
+  var macroMatrixBodyEl = document.getElementById("macroMatrixBody");
+  var macroStatusEl = document.getElementById("macroStatus");
+  var macroTrendGridEl = document.getElementById("macroTrendGrid");
+  var macroPresetButtons = Array.from(document.querySelectorAll(".macro-preset-btn[data-macro-preset]"));
+  var macroPresetCopyEl = document.getElementById("macroPresetCopy");
+  var analysisPresetButtons = Array.from(document.querySelectorAll(".macro-preset-btn[data-analysis-preset]"));
+  var analysisPresetCopyEl = document.getElementById("analysisPresetCopy");
+  var analysisSections = Array.from(document.querySelectorAll(".analysis-section[data-analysis-section]"));
+  var macroStateEl = document.getElementById("macroState");
+  var macroStateTitleEl = document.getElementById("macroStateTitle");
+  var macroStateCopyEl = document.getElementById("macroStateCopy");
+  var macroStateScoreEl = document.getElementById("macroStateScore");
+  var macroProxyNoteEl = document.getElementById("macroProxyNote");
+  var analysisStatusEl = document.getElementById("analysisStatus");
+  var daGaugeEl = document.getElementById("daGauge");
+  var daGaugeScoreEl = document.getElementById("daGaugeScore");
+  var daDivBadgeEl = document.getElementById("daDivBadge");
+  var daChartInstances = [];
+  var activeView = "dashboard";
+  var activeMacroPreset = "context";
+  var activeAnalysisPreset = "overview";
+  var macroCache = null;
+  var macroModelCache = null;
+  var analysisCache = null;
+  var activeInfoTrigger = null;
 
   // ── Resolution → seconds ──
   var RES_SEC = { "1D": 86400, "1W": 604800, "1M": 2592000, "1Y": 31536000 };
 
   // ── Categories for symbols ──
-  var BOTTOM_SYMBOLS = new Set(["BTC.NUPL","BTC.PUELL_MULTIPLE","BTC.FEAR_GREED_INDEX","BTC.MA200_RATIO","BTC.PI_CYCLE"]);
-  var PRICING_SYMBOLS = new Set(["BTC.PRICE_USD","BTC.REALIZED_PRICE","BTC.BALANCED_PRICE_EST","BTC.TRANSFERRED_PRICE_EST","BTC.DELTA_PRICE","BTC.MARKET_CAP","BTC.REALIZED_CAP","BTC.AVERAGE_CAP","BTC.MVRV","BTC.MINER_REVENUE","BTC.CIRCULATING_SUPPLY"]);
+  var BOTTOM_SYMBOLS = new Set(["BTC.NUPL","BTC.PUELL_MULTIPLE","BTC.FEAR_GREED_INDEX","BTC.MA200_RATIO","BTC.PI_CYCLE","BTC.WEEKLY_RSI14"]);
+  var PRICING_SYMBOLS = new Set(["BTC.PRICE_USD","BTC.REALIZED_PRICE","BTC.BALANCED_PRICE_EST","BTC.TRANSFERRED_PRICE_EST","BTC.DELTA_PRICE","BTC.MARKET_CAP","BTC.REALIZED_CAP","BTC.AVERAGE_CAP","BTC.MVRV","BTC.MINER_REVENUE","BTC.CIRCULATING_SUPPLY","BTC.TWO_YEAR_MA","BTC.TWO_YEAR_MA_X5","BTC.MA200W"]);
 
-  var PRIORITY = ["BTC.PRICE_USD","BTC.REALIZED_PRICE","BTC.BALANCED_PRICE_EST","BTC.NUPL","BTC.PUELL_MULTIPLE","BTC.FEAR_GREED_INDEX"];
+  var PRIORITY = ["BTC.PRICE_USD","BTC.REALIZED_PRICE","BTC.TWO_YEAR_MA","BTC.TWO_YEAR_MA_X5","BTC.MA200W","BTC.BALANCED_PRICE_EST","BTC.NUPL","BTC.PUELL_MULTIPLE","BTC.WEEKLY_RSI14","BTC.FEAR_GREED_INDEX"];
 
   // ── Bottom signal thresholds ──
   var SIGNAL_CONFIG = {
@@ -343,6 +930,225 @@
     "BTC.MA200_RATIO":      { id: "sig-ma200", green: [1, Infinity], yellow: [0.8, 1],  red: [-Infinity, 0.8] },
     "BTC.PI_CYCLE":         { id: "sig-pi",    green: [1, Infinity], yellow: [0.5, 1],  red: [-Infinity, 0.5] },
     "BTC.FEAR_GREED_INDEX": { id: "sig-fg",    green: [50, Infinity],yellow: [20, 50],  red: [-Infinity, 20] },
+  };
+  var MACRO_REQUIRED_SYMBOLS = [
+    "BTC.PRICE_USD",
+    "BTC.REALIZED_PRICE",
+    "BTC.MVRV",
+    "BTC.NUPL",
+    "BTC.PUELL_MULTIPLE",
+    "BTC.MA200_RATIO",
+    "BTC.TWO_YEAR_MA",
+    "BTC.TWO_YEAR_MA_X5",
+    "BTC.MA200W",
+    "BTC.WEEKLY_RSI14",
+    "BTC.FEAR_GREED_INDEX",
+    "BTC.BALANCED_PRICE_EST",
+    "BTC.DELTA_PRICE"
+  ];
+  var MACRO_CHART_SYMBOLS = [
+    "BTC.PRICE_USD",
+    "BTC.REALIZED_PRICE",
+    "BTC.BALANCED_PRICE_EST",
+    "BTC.DELTA_PRICE",
+    "BTC.TWO_YEAR_MA",
+    "BTC.TWO_YEAR_MA_X5",
+    "BTC.MA200W"
+  ];
+  var VALID_MACRO_PRESETS = { context: true, bottom: true, structure: true, cycle: true };
+  var VALID_ANALYSIS_PRESETS = { overview: true, flows: true, fundamentals: true, bottom: true };
+  var VALID_VIEWS = { dashboard: true, macro: true, analysis: true };
+  var INFO_COPY = {
+    "dashboard-main-chart": {
+      title: "BTC Price Bands",
+      what: "This chart compares spot price with Realized Price and estimated Balanced Price so you can see whether BTC is trading above or below major on-chain cost zones.",
+      example: "Example: if spot drops below Realized Price while Balanced Price still sits lower, the market is entering a deeper value pocket rather than a full trend reversal."
+    },
+    "dashboard-bottom-signals": {
+      title: "Bottom Detection Signals",
+      what: "These tiles compress classic bottom indicators into trigger zones so you can scan for capitulation faster.",
+      example: "Example: if NUPL, Puell, and Fear & Greed all shift into their red zones together, bottom conditions are strengthening."
+    },
+    "dashboard-metrics": {
+      title: "Metric Cards",
+      what: "The card grid lists every available live metric after your filters. Each card shows the latest reading plus a mini history chart.",
+      example: "Example: filter to BTC pricing metrics and compare the latest value against the last 30 points to see whether a signal is accelerating or fading."
+    },
+    "macro-overview": {
+      title: "Macro Accumulation",
+      what: "This view translates live valuation, capitulation, and structure signals into an accumulation framework with preset lenses.",
+      example: "Example: use Bottom Focus when price nears Realized or Delta bands, then switch to Structure Focus to see whether long-term support confirms the move."
+    },
+    "macro-price-bands": {
+      title: "Macro Price Bands",
+      what: "These lines map major on-chain price anchors and long-term moving-average support to show where value and cycle resistance historically appear.",
+      example: "Example: if BTC trades near the 2-Year MA while far below the 2Y MA x5 ceiling, downside value may be improving while upside headroom remains open."
+    },
+    "macro-live-signals": {
+      title: "Live Macro Signals",
+      what: "Each card turns a live metric into a trigger-based macro read with threshold, current state, and next action.",
+      example: "Example: a Triggered state on Spot vs Realized Price means price has reached or fallen below on-chain cost basis."
+    },
+    "macro-action-matrix": {
+      title: "Action Matrix",
+      what: "The matrix puts every macro trigger into one table so you can compare the current reading, threshold, interpretation, and suggested action side by side.",
+      example: "Example: if several rows are Triggered at once, the model is moving from watch mode toward accumulation or accelerated DCA."
+    },
+    "analysis-bottom-gauge": {
+      title: "Bottom Gauge",
+      what: "The gauge scores whether key bottom conditions are aligned across flows, miner stress, and valuation.",
+      example: "Example: a score of 4 out of 4 means all tracked bottom signals are active at the same time."
+    },
+    "analysis-net-flow-signal": {
+      title: "Net Flow Signal",
+      what: "This gauge signal flips on when exchange net flow is below zero, meaning more BTC is leaving exchanges than entering them.",
+      example: "Example: sustained negative net flow can indicate coins moving into cold storage instead of being prepared for sale."
+    },
+    "analysis-puell-signal": {
+      title: "Puell Signal",
+      what: "This gauge signal checks whether Puell Multiple is below 0.5, a classic miner-capitulation threshold.",
+      example: "Example: if Puell drops to 0.42, miners are earning far below their yearly norm and forced selling pressure may be near exhaustion."
+    },
+    "analysis-mvrv-z-signal": {
+      title: "MVRV Z Signal",
+      what: "This gauge signal checks whether MVRV Z-Score is below zero, which marks deep valuation stress versus historical norms.",
+      example: "Example: a negative MVRV Z reading means the market cap sits unusually close to or below realized capitalization."
+    },
+    "analysis-nupl-signal": {
+      title: "NUPL Signal",
+      what: "This gauge signal checks whether NUPL has dropped below zero, meaning unrealized losses dominate across holders.",
+      example: "Example: NUPL at -0.05 means the market is underwater on aggregate and holder pain is broad."
+    },
+    "analysis-net-flows": {
+      title: "Exchange Net Flows",
+      what: "Net flow compares exchange inflows and outflows to show whether coins are moving onto exchanges or away from them.",
+      example: "Example: repeated green bars mean more BTC is leaving exchanges than entering, which often supports a less aggressive sell-side backdrop."
+    },
+    "analysis-whales": {
+      title: "Whale Accumulation",
+      what: "This concept tracks whether large holders, typically addresses with more than 1,000 BTC, are adding or reducing balance.",
+      example: "Example: if whale balances climb while price falls, large players may be accumulating into weakness."
+    },
+    "analysis-active-addresses": {
+      title: "Active Addresses Divergence",
+      what: "This compares network activity with price to see whether usage improves even while price weakens.",
+      example: "Example: if price falls 5% over a month while active addresses rise 3%, network demand is improving underneath the selloff."
+    },
+    "analysis-fees": {
+      title: "Transaction Fees & Blockspace Demand",
+      what: "Fees are a direct price for blockspace. Rising fees usually mean the network is becoming more competitive to use.",
+      example: "Example: a sharp fee spike during price stabilization can hint that demand is returning before price fully breaks out."
+    },
+    "macro-spot-realized": {
+      title: "Spot vs Realized Price",
+      what: "This compares current BTC price with Realized Price, an on-chain estimate of the average cost basis of all coins.",
+      example: "Example: if spot falls below Realized Price, BTC is trading below aggregate cost basis and long-term value improves."
+    },
+    "trend-spot-change": {
+      title: "Spot Change",
+      what: "This shows percentage price change over the currently selected period and resolution.",
+      example: "Example: a -12% reading over 30 days means BTC is down 12% across the last 30 daily candles."
+    },
+    "sym:BTC.PRICE_USD": {
+      title: "BTC Price",
+      what: "Spot price is the latest traded BTC market price in USD.",
+      example: "Example: use BTC price as the anchor series when comparing valuation, flows, and momentum metrics."
+    },
+    "sym:BTC.REALIZED_PRICE": {
+      title: "Realized Price",
+      what: "Realized Price estimates the average cost basis of all circulating BTC based on the last on-chain move of each coin.",
+      example: "Example: if BTC trades below Realized Price, the market is below aggregate holder cost basis."
+    },
+    "sym:BTC.BALANCED_PRICE_EST": {
+      title: "Balanced Price",
+      what: "Balanced Price is an estimated on-chain value band derived from historic capital flow relationships.",
+      example: "Example: if spot is close to Balanced Price but still above Delta Price, the market may be in a deep but not final value zone."
+    },
+    "sym:BTC.DELTA_PRICE": {
+      title: "Delta Price",
+      what: "Delta Price is a deeper historical value band often used to frame extreme bear-market lows.",
+      example: "Example: touching Delta Price has historically happened only during severe capitulation phases."
+    },
+    "sym:BTC.MVRV": {
+      title: "MVRV Ratio",
+      what: "MVRV compares market cap with realized cap to show whether BTC is expensive or cheap versus invested capital.",
+      example: "Example: MVRV below 1 means market value is below realized value, a classic undervaluation regime."
+    },
+    "sym:BTC.MVRV_ZSCORE": {
+      title: "MVRV Z-Score",
+      what: "MVRV Z-Score standardizes valuation stress by measuring how far market value has moved from realized value versus historical volatility.",
+      example: "Example: readings below 0 historically cluster around deep value zones and bear-market lows."
+    },
+    "sym:BTC.NUPL": {
+      title: "NUPL",
+      what: "Net Unrealized Profit/Loss measures aggregate holder profit or loss relative to market value.",
+      example: "Example: NUPL below 0 means holders are underwater on aggregate, which is a classic capitulation condition."
+    },
+    "sym:BTC.PUELL_MULTIPLE": {
+      title: "Puell Multiple",
+      what: "Puell Multiple compares current miner revenue with its yearly average to estimate miner stress or overheating.",
+      example: "Example: a reading below 0.5 means miners are earning far below their usual level, which often appears near macro lows."
+    },
+    "sym:BTC.MA200_RATIO": {
+      title: "Price / 200d MA",
+      what: "This ratio compares spot price with the 200-day moving average to show whether price is above or below a major trend line.",
+      example: "Example: a ratio below 1 means price is trading under the 200-day average and trend pressure is negative."
+    },
+    "sym:BTC.PI_CYCLE": {
+      title: "Pi Cycle",
+      what: "Pi Cycle is a cycle-timing indicator built from moving-average relationships that historically marked extremes.",
+      example: "Example: a deeply compressed Pi Cycle reading can support broader bottom detection when other stress signals also align."
+    },
+    "sym:BTC.FEAR_GREED_INDEX": {
+      title: "Fear & Greed",
+      what: "Fear & Greed is a sentiment index that compresses volatility, momentum, and survey-style risk appetite into one reading.",
+      example: "Example: a reading below 20 signals extreme fear and can improve timing when value metrics are also stressed."
+    },
+    "sym:BTC.TWO_YEAR_MA": {
+      title: "2-Year MA",
+      what: "The 2-Year Moving Average is a long-cycle trend anchor often used to frame macro value zones.",
+      example: "Example: when BTC revisits the 2-Year MA, long-term buyers often start watching for structural support."
+    },
+    "sym:BTC.TWO_YEAR_MA_X5": {
+      title: "2-Year MA x 5",
+      what: "This multiplier line extends the 2-Year MA upward to frame historic cycle-top ceilings rather than bottom zones.",
+      example: "Example: if spot is far below the 2Y MA x5 line, the market still has substantial distance from prior cycle-top extremes."
+    },
+    "sym:BTC.MA200W": {
+      title: "200-Week MA",
+      what: "The 200-Week Moving Average is a very high-timeframe support band that has historically aligned with deep bear-market floors.",
+      example: "Example: a direct test of the 200-Week MA is rare and usually marks a major structural support check."
+    },
+    "sym:BTC.WEEKLY_RSI14": {
+      title: "Weekly RSI (14)",
+      what: "Weekly RSI measures momentum exhaustion on the weekly timeframe using a 14-period window.",
+      example: "Example: RSI below 30 means weekly momentum is oversold and can confirm capitulation when valuation is already attractive."
+    },
+    "sym:BTC.EXCHANGE_FLOW_IN": {
+      title: "Exchange Inflow",
+      what: "Exchange inflow measures how much BTC is moving onto exchanges, which can increase available sell-side liquidity.",
+      example: "Example: rising inflows during weakness can suggest traders are preparing to sell coins into the market."
+    },
+    "sym:BTC.EXCHANGE_FLOW_OUT": {
+      title: "Exchange Outflow",
+      what: "Exchange outflow measures how much BTC is leaving exchanges, often toward custody or long-term holding wallets.",
+      example: "Example: repeated outflows during a price drawdown can signal investors are absorbing supply instead of distributing it."
+    },
+    "sym:BTC.ACTIVE_ADDR_CM": {
+      title: "Active Addresses",
+      what: "Active addresses count the number of distinct addresses participating on-chain over a period.",
+      example: "Example: if active addresses keep rising while price drifts lower, network demand is firming before price follows."
+    },
+    "sym:BTC.ACTIVE_ADDRESSES": {
+      title: "Active Addresses",
+      what: "Active addresses count the number of distinct addresses participating on-chain over a period.",
+      example: "Example: if active addresses keep rising while price drifts lower, network demand is firming before price follows."
+    },
+    "sym:BTC.FEE_TOTAL_USD": {
+      title: "Transaction Fees",
+      what: "This metric tracks the total USD value paid in transaction fees, which reflects urgency and demand for blockspace.",
+      example: "Example: a sudden jump in total fees often means network usage is heating up faster than blockspace supply can absorb."
+    }
   };
 
   // ── Helpers ──
@@ -354,6 +1160,27 @@
     if (a >= 1e3)  return (v/1e3).toFixed(2)+"K";
     if (a >= 1)    return v.toFixed(4);
     return v.toFixed(6);
+  }
+
+  function isFiniteNumber(v) {
+    return typeof v === "number" && !Number.isNaN(v) && Number.isFinite(v);
+  }
+
+  function fmtUsd(v) {
+    return isFiniteNumber(v) ? "$"+fmtNum(v) : "-";
+  }
+
+  function fmtPct(v) {
+    if (!isFiniteNumber(v)) return "-";
+    var pct = v * 100;
+    var sign = pct > 0 ? "+" : "";
+    return sign + pct.toFixed(1) + "%";
+  }
+
+  function esc(text) {
+    return String(text).replace(/[&<>"']/g, function(ch) {
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[ch];
+    });
   }
 
   function tsLabel(ts, res) {
@@ -406,11 +1233,166 @@
     return "/metrics/"+encodeURIComponent(sym)+"/history?from="+from+"&to="+to+"&resolution="+res;
   }
 
+  function periodLabel(periods, res) {
+    var units = { "1D": "Day", "1W": "Week", "1M": "Month", "1Y": "Year" };
+    var unit = units[res] || res;
+    return periods > 0 ? periods+" x "+unit : "All Time · "+unit;
+  }
+
+  function chipText(level) {
+    if (level === "active") return "Triggered";
+    if (level === "watch") return "Near Trigger";
+    return "Inactive";
+  }
+
+  function statusLevel(active, watch) {
+    if (active) return "active";
+    if (watch) return "watch";
+    return "idle";
+  }
+
+  function pctChangeFromPoints(points) {
+    if (!points || points.length < 2) return null;
+    var first = Number(points[0].value);
+    var last = Number(points[points.length - 1].value);
+    if (!isFiniteNumber(first) || !isFiniteNumber(last) || first === 0) return null;
+    return (last / first) - 1;
+  }
+
+  function getInfoContent(key) {
+    if (INFO_COPY[key]) return INFO_COPY[key];
+    if (key && key.indexOf("sym:") === 0) {
+      var symbol = key.slice(4);
+      return {
+        title: symbol,
+        what: "This is a live metric served by the dashboard API.",
+        example: "Example: compare the latest reading with the mini chart to judge whether the metric is strengthening, weakening, or flattening over the selected range."
+      };
+    }
+    return {
+      title: "Indicator",
+      what: "This dashboard element summarizes a live metric or a derived signal.",
+      example: "Example: combine the current reading with its threshold and recent trend before making an allocation decision."
+    };
+  }
+
+  function infoButtonHtml(key, label) {
+    return '<button class="info-trigger" type="button" data-info-key="'+esc(key)+'" aria-label="Explain '+esc(label)+'">i</button>';
+  }
+
+  function renderInfoLabel(text, key, className) {
+    return '<span class="'+(className || 'info-label')+'"><span>'+esc(text)+'</span>'+infoButtonHtml(key, text)+'</span>';
+  }
+
+  function setFocusSummary(view, lens, readout, copy) {
+    focusViewEl.textContent = view;
+    focusLensEl.textContent = lens;
+    focusReadoutEl.textContent = readout;
+    focusCopyEl.textContent = copy;
+  }
+
+  function updateFocusSummary() {
+    if (activeView === "macro") {
+      var model = macroModelCache || { stateLevel: "watch" };
+      var presetConfig = getMacroPresetConfig(model);
+      setFocusSummary(
+        "Macro Accumulation",
+        presetConfig.label,
+        macroModelCache ? macroModelCache.stateTitle : "Loading",
+        macroModelCache ? macroModelCache.stateCopy : presetConfig.copy
+      );
+      return;
+    }
+    if (activeView === "analysis") {
+      var preset = getAnalysisPresetConfig();
+      setFocusSummary(
+        "Deep Analysis",
+        preset.label,
+        analysisCache ? analysisCache.symCount + " live metrics" : "Loading",
+        preset.copy
+      );
+      return;
+    }
+    setFocusSummary(
+      "Dashboard",
+      "Overview",
+      periodLabel(Number(periodsEl.value), resEl.value),
+      "Track live price bands, bottom signals, and mini-chart history across the filtered metric set."
+    );
+  }
+
+  function closeInfoPopover() {
+    infoPopoverEl.classList.remove("open");
+    if (activeInfoTrigger) activeInfoTrigger.setAttribute("aria-expanded", "false");
+    activeInfoTrigger = null;
+  }
+
+  function positionInfoPopover(trigger) {
+    if (!trigger) return;
+    var rect = trigger.getBoundingClientRect();
+    var popRect = infoPopoverEl.getBoundingClientRect();
+    var top = rect.bottom + 10;
+    var left = rect.left + (rect.width / 2) - (popRect.width / 2);
+    top = Math.max(12, Math.min(top, window.innerHeight - popRect.height - 12));
+    left = Math.max(12, Math.min(left, window.innerWidth - popRect.width - 12));
+    infoPopoverEl.style.top = top + "px";
+    infoPopoverEl.style.left = left + "px";
+  }
+
+  function openInfoPopover(trigger) {
+    var info = getInfoContent(trigger.getAttribute("data-info-key") || "");
+    if (activeInfoTrigger && activeInfoTrigger !== trigger) {
+      activeInfoTrigger.setAttribute("aria-expanded", "false");
+    }
+    activeInfoTrigger = trigger;
+    trigger.setAttribute("aria-expanded", "true");
+    infoPopoverTitleEl.textContent = info.title;
+    infoPopoverWhatEl.textContent = info.what;
+    infoPopoverExampleEl.textContent = info.example;
+    infoPopoverEl.classList.add("open");
+    requestAnimationFrame(function() { positionInfoPopover(trigger); });
+  }
+
+  function syncView() {
+    var isMacro = activeView === "macro";
+    var isAnalysis = activeView === "analysis";
+    var isDashboard = activeView === "dashboard";
+    dashboardPanelEl.classList.toggle("active", isDashboard);
+    macroPanelEl.classList.toggle("active", isMacro);
+    analysisPanelEl.classList.toggle("active", isAnalysis);
+    summaryEl.classList.toggle("hidden", !isDashboard);
+    catEl.classList.toggle("control-hidden", !isDashboard);
+    chainEl.classList.toggle("control-hidden", !isDashboard);
+    searchEl.classList.toggle("control-hidden", !isDashboard);
+    catEl.disabled = !isDashboard;
+    chainEl.disabled = !isDashboard;
+    searchEl.disabled = !isDashboard;
+    tabButtons.forEach(function(btn) {
+      var selected = btn.getAttribute("data-view") === activeView;
+      btn.classList.toggle("active", selected);
+      btn.setAttribute("aria-selected", selected ? "true" : "false");
+    });
+    macroPresetButtons.forEach(function(btn) {
+      var selected = btn.getAttribute("data-macro-preset") === activeMacroPreset;
+      btn.classList.toggle("active", selected);
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+    analysisPresetButtons.forEach(function(btn) {
+      var selected = btn.getAttribute("data-analysis-preset") === activeAnalysisPreset;
+      btn.classList.toggle("active", selected);
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+    updateFocusSummary();
+  }
+
   // ── URL state persistence ──
   function writeHashState() {
     var p = new URLSearchParams();
     p.set("p", periodsEl.value);
     p.set("r", resEl.value);
+    p.set("v", activeView);
+    if (activeMacroPreset !== "context") p.set("mp", activeMacroPreset);
+    if (activeAnalysisPreset !== "overview") p.set("ap", activeAnalysisPreset);
     if (catEl.value !== "all") p.set("c", catEl.value);
     if (chainEl.value !== "all") p.set("ch", chainEl.value);
     if (searchEl.value.trim()) p.set("q", searchEl.value.trim());
@@ -420,6 +1402,9 @@
     var p = new URLSearchParams(window.location.hash.slice(1));
     if (p.has("p")) periodsEl.value = p.get("p");
     if (p.has("r")) resEl.value = p.get("r");
+    if (p.has("v") && VALID_VIEWS[p.get("v")]) activeView = p.get("v");
+    if (p.has("mp") && VALID_MACRO_PRESETS[p.get("mp")]) activeMacroPreset = p.get("mp");
+    if (p.has("ap") && VALID_ANALYSIS_PRESETS[p.get("ap")]) activeAnalysisPreset = p.get("ap");
     if (p.has("c")) catEl.value = p.get("c");
     if (p.has("ch")) chainEl.value = p.get("ch");
     if (p.has("q")) searchEl.value = p.get("q");
@@ -443,6 +1428,71 @@
         ctx.stroke();
         ctx.restore();
       }
+    }
+  };
+  var macroAnnotationsPlugin = {
+    id: "macroAnnotations",
+    afterDatasetsDraw: function(chart, _args, options) {
+      if (!options) return;
+
+      var ctx = chart.ctx;
+      var area = chart.chartArea;
+      var yScale = chart.scales.y;
+      if (!ctx || !area || !yScale) return;
+
+      function drawBox(text, x, y, fg, bg, align) {
+        ctx.save();
+        ctx.font = '11px "Share Tech Mono", monospace';
+        var width = ctx.measureText(text).width + 12;
+        var height = 18;
+        var left = align === "right" ? x - width : x;
+        ctx.fillStyle = bg;
+        ctx.fillRect(left, y - height + 4, width, height);
+        ctx.fillStyle = fg;
+        ctx.fillText(text, left + 6, y + 4);
+        ctx.restore();
+      }
+
+      ctx.save();
+      (options.zones || []).forEach(function(zone) {
+        if (!isFiniteNumber(zone.top) || !isFiniteNumber(zone.bottom) || zone.top <= 0 || zone.bottom <= 0) return;
+        var topPx = yScale.getPixelForValue(zone.top);
+        var bottomPx = yScale.getPixelForValue(zone.bottom);
+        var rectTop = Math.min(topPx, bottomPx);
+        var rectHeight = Math.abs(bottomPx - topPx);
+        if (rectHeight < 3) return;
+        ctx.fillStyle = zone.fill || "rgba(85,255,179,0.08)";
+        ctx.fillRect(area.left, rectTop, area.right - area.left, rectHeight);
+        if (zone.label) {
+          drawBox(zone.label, area.left + 8, rectTop + 14, zone.color || "#dff9ed", zone.badge || "rgba(4,17,13,0.82)", "left");
+        }
+      });
+
+      (options.lines || []).forEach(function(line) {
+        if (!isFiniteNumber(line.value) || line.value <= 0) return;
+        var y = yScale.getPixelForValue(line.value);
+        if (y < area.top || y > area.bottom) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(area.left, y);
+        ctx.lineTo(area.right, y);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = line.color || "rgba(223,249,237,0.55)";
+        ctx.setLineDash(line.dash || [5, 5]);
+        ctx.stroke();
+        ctx.restore();
+        if (line.label) {
+          drawBox(line.label, area.right - 6, y, line.textColor || "#04110d", line.badge || line.color || "rgba(223,249,237,0.9)", "right");
+        }
+      });
+
+      if (options.regime && options.regime.label) {
+        drawBox(options.regime.label, area.left + 8, area.top + 16, options.regime.textColor || "#04110d", options.regime.badge || "#55ffb3", "left");
+        if (options.regime.subLabel) {
+          drawBox(options.regime.subLabel, area.left + 8, area.top + 38, "#dff9ed", "rgba(4,17,13,0.78)", "left");
+        }
+      }
+      ctx.restore();
     }
   };
 
@@ -546,7 +1596,7 @@
     var chain = sym.startsWith("BTC") ? "BTC" : sym.startsWith("ETH") ? "ETH" : "";
 
     card.innerHTML =
-      '<div class="symbol">'+sym+' <span class="tag">'+chain+'</span> '+catTag+'</div>'+
+      '<div class="symbol">'+esc(sym)+' '+infoButtonHtml("sym:"+sym, sym)+' <span class="tag">'+chain+'</span> '+catTag+'</div>'+
       '<div class="value">'+fmtNum(val)+'</div>'+
       '<div class="meta">'+asLocal(latest.timestamp)+'</div>'+
       '<div class="card-chart"><canvas></canvas></div>'+
@@ -608,8 +1658,622 @@
     if (modalChartInstance) { modalChartInstance.destroy(); modalChartInstance = null; }
   }
 
+  function getMacroPresetConfig(model) {
+    var presets = {
+      context: {
+        label: "Full Context",
+        copy: "Full context combines value bands, structural support, and the cycle ceiling in one view.",
+        visibleSymbols: {
+          "BTC.PRICE_USD": true,
+          "BTC.REALIZED_PRICE": true,
+          "BTC.BALANCED_PRICE_EST": true,
+          "BTC.DELTA_PRICE": true,
+          "BTC.TWO_YEAR_MA": true,
+          "BTC.TWO_YEAR_MA_X5": false,
+          "BTC.MA200W": true,
+        },
+        zoneIds: ["deep-value", "macro-support"],
+        lineIds: ["realized", "delta", "2y", "200w"],
+        regimeSub: model.stateLevel === "accelerate" ? "Broad confluence active" : "Full macro context",
+      },
+      bottom: {
+        label: "Bottom Focus",
+        copy: "Bottom Focus emphasizes Realized, Balanced, and Delta for fast reads on capitulation and deep-value zones.",
+        visibleSymbols: {
+          "BTC.PRICE_USD": true,
+          "BTC.REALIZED_PRICE": true,
+          "BTC.BALANCED_PRICE_EST": true,
+          "BTC.DELTA_PRICE": true,
+          "BTC.TWO_YEAR_MA": false,
+          "BTC.TWO_YEAR_MA_X5": false,
+          "BTC.MA200W": false,
+        },
+        zoneIds: ["deep-value"],
+        lineIds: ["realized", "delta"],
+        regimeSub: "Bottom Focus active",
+      },
+      structure: {
+        label: "Structure Focus",
+        copy: "Structure Focus zooms in on high-timeframe support via the 2-Year MA and 200-Week MA, without the shorter value bands.",
+        visibleSymbols: {
+          "BTC.PRICE_USD": true,
+          "BTC.REALIZED_PRICE": false,
+          "BTC.BALANCED_PRICE_EST": false,
+          "BTC.DELTA_PRICE": false,
+          "BTC.TWO_YEAR_MA": true,
+          "BTC.TWO_YEAR_MA_X5": false,
+          "BTC.MA200W": true,
+        },
+        zoneIds: ["macro-support"],
+        lineIds: ["2y", "200w"],
+        regimeSub: "Structure Focus active",
+      },
+      cycle: {
+        label: "Cycle-Top Context",
+        copy: "Cycle-Top Context centers the 2-Year MA multiplier to judge remaining upside room versus historical cycle ceilings.",
+        visibleSymbols: {
+          "BTC.PRICE_USD": true,
+          "BTC.REALIZED_PRICE": false,
+          "BTC.BALANCED_PRICE_EST": false,
+          "BTC.DELTA_PRICE": false,
+          "BTC.TWO_YEAR_MA": true,
+          "BTC.TWO_YEAR_MA_X5": true,
+          "BTC.MA200W": false,
+        },
+        zoneIds: [],
+        lineIds: ["2y", "2yx5"],
+        regimeSub: "Cycle-Top Context active",
+      }
+    };
+    return presets[activeMacroPreset] || presets.context;
+  }
+
+  function drawMacroChart(seriesMap, annotations, presetConfig) {
+    if (macroChartInstance) { macroChartInstance.destroy(); macroChartInstance = null; }
+
+    var palette = {
+      "BTC.PRICE_USD": "#5dffba",
+      "BTC.REALIZED_PRICE": "#3dd6b5",
+      "BTC.BALANCED_PRICE_EST": "#ffc16b",
+      "BTC.DELTA_PRICE": "#ff8f7d",
+      "BTC.TWO_YEAR_MA": "#8ab4ff",
+      "BTC.TWO_YEAR_MA_X5": "#94a3b8",
+      "BTC.MA200W": "#f472b6"
+    };
+    var labelsMap = {
+      "BTC.PRICE_USD": "BTC Price",
+      "BTC.REALIZED_PRICE": "Realized Price",
+      "BTC.BALANCED_PRICE_EST": "Balanced Price",
+      "BTC.DELTA_PRICE": "Delta Price",
+      "BTC.TWO_YEAR_MA": "2-Year MA",
+      "BTC.TWO_YEAR_MA_X5": "2-Year MA × 5",
+      "BTC.MA200W": "200-Week MA"
+    };
+    var tsSet = new Set();
+    Object.keys(seriesMap).forEach(function(sym) {
+      (seriesMap[sym] || []).forEach(function(point) { tsSet.add(point.timestamp); });
+    });
+
+    var sortedTs = Array.from(tsSet).sort(function(a, b) { return a - b; });
+    if (!sortedTs.length) return;
+
+    function toMap(points) {
+      var map = new Map();
+      (points || []).forEach(function(point) { map.set(point.timestamp, Number(point.value)); });
+      return map;
+    }
+
+    var labels = sortedTs.map(function(ts) { return tsLabel(ts, resEl.value); });
+    var datasets = MACRO_CHART_SYMBOLS.map(function(sym) {
+      var points = seriesMap[sym] || [];
+      var map = toMap(points);
+      return {
+        label: labelsMap[sym],
+        data: sortedTs.map(function(ts) { return map.has(ts) ? map.get(ts) : null; }),
+        borderColor: palette[sym],
+        borderWidth: sym === "BTC.PRICE_USD" ? 2.2 : 1.7,
+        fill: false,
+        pointRadius: 0,
+        tension: 0.18,
+        spanGaps: true,
+        borderDash: sym === "BTC.TWO_YEAR_MA_X5" ? [6, 6] : undefined,
+      };
+    });
+
+    if (!datasets.some(function(dataset) {
+      return dataset.data.some(function(value) { return value !== null; });
+    })) return;
+
+    macroChartInstance = new Chart(macroCanvas, {
+      type: "line",
+      data: { labels: labels, datasets: datasets },
+      plugins: [crosshairPlugin, macroAnnotationsPlugin],
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 260 },
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          macroAnnotations: annotations,
+          tooltip: {
+            backgroundColor: "rgba(4,17,13,0.92)",
+            borderColor: "#245540",
+            borderWidth: 1,
+            titleColor: "#55ffb3",
+            bodyColor: "#dff9ed",
+            callbacks: {
+              label: function(ctx) { return " " + ctx.dataset.label + ": " + fmtUsd(ctx.parsed.y); }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: "#8db8a6", maxTicksLimit: 10, maxRotation: 0, font: { size: 10 } }, grid: { color: "#1a3d2e" } },
+          y: { type: "logarithmic", ticks: { color: "#8db8a6", maxTicksLimit: 7, callback: function(v) { return "$" + fmtNum(v); }, font: { size: 10 } }, grid: { color: "#1a3d2e" } }
+        }
+      }
+    });
+
+    document.querySelectorAll(".legend-item[data-macro-ds]").forEach(function(el) {
+      var idx = Number(el.getAttribute("data-macro-ds"));
+      var sym = MACRO_CHART_SYMBOLS[idx];
+      var shouldShow = !presetConfig || !presetConfig.visibleSymbols || presetConfig.visibleSymbols[sym] !== false;
+      var meta = macroChartInstance.getDatasetMeta(idx);
+      if (meta) {
+        meta.hidden = !shouldShow;
+      }
+      el.classList.toggle("inactive", !shouldShow);
+    });
+    macroChartInstance.update("none");
+  }
+
+  function buildMacroModel(metrics) {
+    var price = metrics["BTC.PRICE_USD"];
+    var realized = metrics["BTC.REALIZED_PRICE"];
+    var twoYearMa = metrics["BTC.TWO_YEAR_MA"];
+    var twoYearMaX5 = metrics["BTC.TWO_YEAR_MA_X5"];
+    var ma200w = metrics["BTC.MA200W"];
+    var weeklyRsi = metrics["BTC.WEEKLY_RSI14"];
+    var mvrv = metrics["BTC.MVRV"];
+    var nupl = metrics["BTC.NUPL"];
+    var puell = metrics["BTC.PUELL_MULTIPLE"];
+    var ma200 = metrics["BTC.MA200_RATIO"];
+    var fear = metrics["BTC.FEAR_GREED_INDEX"];
+    var balanced = metrics["BTC.BALANCED_PRICE_EST"];
+    var delta = metrics["BTC.DELTA_PRICE"];
+
+    var availableCount = Object.keys(metrics).length;
+    var score = 0;
+    var maxScore = 11;
+    var cards = [];
+    var rows = [];
+
+    function pushRow(label, current, threshold, level, interpretation, action, weight, infoKey) {
+      if (level === "active" && weight) score += weight;
+      rows.push({
+        label: label,
+        current: current,
+        threshold: threshold,
+        level: level,
+        interpretation: interpretation,
+        action: action,
+        infoKey: infoKey,
+      });
+    }
+
+    var priceGap = isFiniteNumber(price) && isFiniteNumber(realized) && realized !== 0 ? (price / realized) - 1 : null;
+    var priceActive = priceGap !== null && price <= realized;
+    var priceWatch = priceGap !== null && !priceActive && price <= realized * 1.08;
+    cards.push({
+      label: "Spot vs Realized Price",
+      infoKey: "macro-spot-realized",
+      value: priceGap === null ? "-" : fmtPct(priceGap),
+      sub: priceGap === null ? "No live data" : "Spot "+fmtUsd(price)+" · Realized "+fmtUsd(realized),
+      threshold: "Trigger: spot price <= Realized Price",
+      note: priceActive ? "Spot is trading at or below on-chain cost basis." : (priceWatch ? "Spot is near cost basis; the value zone is building." : "Spot is still above the fundamental cost basis."),
+      level: statusLevel(priceActive, priceWatch),
+    });
+    pushRow(
+      "Spot vs Realized Price",
+      priceGap === null ? "-" : fmtPct(priceGap),
+      "<= 0.0% gap",
+      statusLevel(priceActive, priceWatch),
+      priceActive ? "The market trades at or below realized cost." : (priceWatch ? "The market is approaching the network cost basis." : "Spot still sits comfortably above cost basis."),
+      priceActive ? "Start phase-one accumulation." : (priceWatch ? "Prepare to scale DCA if weakness continues." : "Observe; no full value break yet."),
+      2,
+      "macro-spot-realized"
+    );
+
+    var mvrvActive = isFiniteNumber(mvrv) && mvrv < 1;
+    var mvrvWatch = isFiniteNumber(mvrv) && !mvrvActive && mvrv < 1.2;
+    cards.push({
+      label: "MVRV Ratio",
+      infoKey: "sym:BTC.MVRV",
+      value: isFiniteNumber(mvrv) ? mvrv.toFixed(2) : "-",
+      sub: "Proxy for valuation stress; not MVRV Z-Score.",
+      threshold: "Trigger: MVRV < 1.0",
+      note: mvrvActive ? "Spot value is below invested capital." : (mvrvWatch ? "Close to fair value; stress is building." : "Still above the deep-value zone."),
+      level: statusLevel(mvrvActive, mvrvWatch),
+    });
+    pushRow(
+      "MVRV Ratio",
+      isFiniteNumber(mvrv) ? mvrv.toFixed(2) : "-",
+      "< 1.0",
+      statusLevel(mvrvActive, mvrvWatch),
+      mvrvActive ? "Undervalued relative to realized capital." : (mvrvWatch ? "Approaching macro fair value." : "No deep valuation stress yet."),
+      mvrvActive ? "Increase the weight of planned buys." : (mvrvWatch ? "Keep liquidity ready for a value break." : "No extra allocation on MVRV alone."),
+      2,
+      "sym:BTC.MVRV"
+    );
+
+    var twoYearGap = isFiniteNumber(price) && isFiniteNumber(twoYearMa) && twoYearMa !== 0 ? (price / twoYearMa) - 1 : null;
+    var twoYearActive = twoYearGap !== null && price <= twoYearMa;
+    var twoYearWatch = twoYearGap !== null && !twoYearActive && price <= twoYearMa * 1.08;
+    cards.push({
+      label: "2-Year MA",
+      infoKey: "sym:BTC.TWO_YEAR_MA",
+      value: isFiniteNumber(twoYearMa) ? fmtUsd(twoYearMa) : "-",
+      sub: twoYearGap === null ? "No live data" : "Gap to spot: " + fmtPct(twoYearGap),
+      threshold: "Trigger: spot price <= 2-Year MA",
+      note: twoYearActive ? "Spot is trading inside the classic 2-year value band." : (twoYearWatch ? "Spot is approaching the half-cycle band." : "The 2-year band is still below spot."),
+      level: statusLevel(twoYearActive, twoYearWatch),
+    });
+    pushRow(
+      "2-Year MA",
+      twoYearGap === null ? "-" : fmtPct(twoYearGap),
+      "<= 0.0% gap",
+      statusLevel(twoYearActive, twoYearWatch),
+      twoYearActive ? "Price has returned to a classic macro value band." : (twoYearWatch ? "The market is nearing the 2-year value zone." : "No test of the 2-year support band yet."),
+      twoYearActive ? "Add weight to accumulation." : (twoYearWatch ? "Prepare extra allocation if weakness continues." : "Keep watch status."),
+      1,
+      "sym:BTC.TWO_YEAR_MA"
+    );
+
+    var ma200wGap = isFiniteNumber(price) && isFiniteNumber(ma200w) && ma200w !== 0 ? (price / ma200w) - 1 : null;
+    var ma200wActive = ma200wGap !== null && price <= ma200w;
+    var ma200wWatch = ma200wGap !== null && !ma200wActive && price <= ma200w * 1.1;
+    cards.push({
+      label: "200-Week MA",
+      infoKey: "sym:BTC.MA200W",
+      value: isFiniteNumber(ma200w) ? fmtUsd(ma200w) : "-",
+      sub: ma200wGap === null ? "No live data" : "Gap to spot: " + fmtPct(ma200wGap),
+      threshold: "Trigger: spot price <= 200-Week MA",
+      note: ma200wActive ? "Spot is testing the long-term floor where macro bottoms often form." : (ma200wWatch ? "Spot is getting close to historic high-timeframe support." : "The 200-week support still sits below the market."),
+      level: statusLevel(ma200wActive, ma200wWatch),
+    });
+    pushRow(
+      "200-Week MA",
+      ma200wGap === null ? "-" : fmtPct(ma200wGap),
+      "<= 0.0% gap",
+      statusLevel(ma200wActive, ma200wWatch),
+      ma200wActive ? "Price is touching a rare high-timeframe support zone." : (ma200wWatch ? "The market is moving into reach of the 200-week floor." : "No structural 200-week support test yet."),
+      ma200wActive ? "Use it as strong structural confirmation for value." : (ma200wWatch ? "Watch for a deep high-timeframe retest." : "No 200-week validation yet."),
+      1,
+      "sym:BTC.MA200W"
+    );
+
+    var nuplActive = isFiniteNumber(nupl) && nupl < 0;
+    var nuplWatch = isFiniteNumber(nupl) && !nuplActive && nupl < 0.2;
+    cards.push({
+      label: "NUPL",
+      infoKey: "sym:BTC.NUPL",
+      value: isFiniteNumber(nupl) ? nupl.toFixed(2) : "-",
+      sub: "Net Unrealized Profit/Loss as a stress gauge.",
+      threshold: "Trigger: NUPL < 0.0",
+      note: nuplActive ? "The market is carrying net unrealized losses." : (nuplWatch ? "Profit margin is thin; capitulation may follow." : "The market still holds net unrealized profit."),
+      level: statusLevel(nuplActive, nuplWatch),
+    });
+    pushRow(
+      "NUPL",
+      isFiniteNumber(nupl) ? nupl.toFixed(2) : "-",
+      "< 0.0",
+      statusLevel(nuplActive, nuplWatch),
+      nuplActive ? "Capitulation stress is visible in unrealized PnL." : (nuplWatch ? "The market is moving toward the stress zone." : "No broad loss dominance yet."),
+      nuplActive ? "Use it as behavioral confirmation for accumulation." : (nuplWatch ? "Monitor it together with Realized Price and Puell." : "No extra signal yet."),
+      1,
+      "sym:BTC.NUPL"
+    );
+
+    var puellActive = isFiniteNumber(puell) && puell < 0.5;
+    var puellWatch = isFiniteNumber(puell) && !puellActive && puell < 1;
+    cards.push({
+      label: "Puell Multiple",
+      infoKey: "sym:BTC.PUELL_MULTIPLE",
+      value: isFiniteNumber(puell) ? puell.toFixed(2) : "-",
+      sub: "Miner stress versus the 365-day revenue baseline.",
+      threshold: "Trigger: Puell < 0.5",
+      note: puellActive ? "Miner capitulation is active." : (puellWatch ? "Revenue sits below the yearly baseline; stress is rising." : "No clear washout in miner revenue."),
+      level: statusLevel(puellActive, puellWatch),
+    });
+    pushRow(
+      "Puell Multiple",
+      isFiniteNumber(puell) ? puell.toFixed(2) : "-",
+      "< 0.5",
+      statusLevel(puellActive, puellWatch),
+      puellActive ? "Miners are operating far below their normal revenue base." : (puellWatch ? "Miner margins are under pressure." : "Miner economics are still relatively healthy."),
+      puellActive ? "Capitulation may mark the last major supply wave." : (puellWatch ? "Validate it if price weakness continues." : "No extra washout confirmation."),
+      1,
+      "sym:BTC.PUELL_MULTIPLE"
+    );
+
+    var maActive = isFiniteNumber(ma200) && ma200 < 1;
+    var maWatch = isFiniteNumber(ma200) && !maActive && ma200 < 1.1;
+    cards.push({
+      label: "Price / 200d MA",
+      infoKey: "sym:BTC.MA200_RATIO",
+      value: isFiniteNumber(ma200) ? ma200.toFixed(2) : "-",
+      sub: "Technical proxy for trend weakness; not the 200-week MA.",
+      threshold: "Trigger: ratio < 1.0",
+      note: maActive ? "Spot is trading below its 200-day trend baseline." : (maWatch ? "The trend baseline sits just below spot." : "Spot is still above the 200-day trend."),
+      level: statusLevel(maActive, maWatch),
+    });
+    pushRow(
+      "Price / 200d MA",
+      isFiniteNumber(ma200) ? ma200.toFixed(2) : "-",
+      "< 1.0",
+      statusLevel(maActive, maWatch),
+      maActive ? "Technical trend pressure confirms macro weakness." : (maWatch ? "Price is balancing around a key trend boundary." : "Trend structure is not broken yet."),
+      maActive ? "Use it as technical confirmation for value zones." : (maWatch ? "Let price action choose a direction first." : "No technical acceleration needed yet."),
+      1,
+      "sym:BTC.MA200_RATIO"
+    );
+
+    var rsiActive = isFiniteNumber(weeklyRsi) && weeklyRsi < 30;
+    var rsiWatch = isFiniteNumber(weeklyRsi) && !rsiActive && weeklyRsi < 40;
+    cards.push({
+      label: "Weekly RSI (14)",
+      infoKey: "sym:BTC.WEEKLY_RSI14",
+      value: isFiniteNumber(weeklyRsi) ? weeklyRsi.toFixed(1) : "-",
+      sub: "Momentum exhaustion on the weekly timeframe.",
+      threshold: "Trigger: RSI < 30",
+      note: rsiActive ? "Selling pressure is technically exhausted on momentum." : (rsiWatch ? "Momentum is weak and nearing oversold." : "No weekly capitulation in momentum yet."),
+      level: statusLevel(rsiActive, rsiWatch),
+    });
+    pushRow(
+      "Weekly RSI (14)",
+      isFiniteNumber(weeklyRsi) ? weeklyRsi.toFixed(1) : "-",
+      "< 30",
+      statusLevel(rsiActive, rsiWatch),
+      rsiActive ? "The weekly structure is in oversold territory." : (rsiWatch ? "Momentum is weakening toward capitulation." : "No oversold weekly signal."),
+      rsiActive ? "Accelerate DCA only together with value signals." : (rsiWatch ? "Use it as an early timing warning." : "No momentum acceleration yet."),
+      1,
+      "sym:BTC.WEEKLY_RSI14"
+    );
+
+    var fearActive = isFiniteNumber(fear) && fear < 25;
+    var fearWatch = isFiniteNumber(fear) && !fearActive && fear < 45;
+    cards.push({
+      label: "Fear & Greed",
+      infoKey: "sym:BTC.FEAR_GREED_INDEX",
+      value: isFiniteNumber(fear) ? fear.toFixed(0) : "-",
+      sub: "Sentiment filter for buyer exhaustion.",
+      threshold: "Trigger: index < 25",
+      note: fearActive ? "Extremely defensive sentiment supports bottom formation." : (fearWatch ? "The market is fearful, but not yet extreme." : "Sentiment is not capitulative enough for a deep bottom."),
+      level: statusLevel(fearActive, fearWatch),
+    });
+    pushRow(
+      "Fear & Greed",
+      isFiniteNumber(fear) ? fear.toFixed(0) : "-",
+      "< 25",
+      statusLevel(fearActive, fearWatch),
+      fearActive ? "Sentiment is in extreme fear." : (fearWatch ? "The market is defensive but not exhausted." : "No capitulative sentiment."),
+      fearActive ? "Use it as a timing filter for faster DCA." : (fearWatch ? "Watch whether fear spills into capitulation." : "No sentiment acceleration yet."),
+      1,
+      "sym:BTC.FEAR_GREED_INDEX"
+    );
+
+    var balancedGap = isFiniteNumber(price) && isFiniteNumber(balanced) && balanced !== 0 ? (price / balanced) - 1 : null;
+    var balancedActive = balancedGap !== null && price <= balanced;
+    var balancedWatch = balancedGap !== null && !balancedActive && price <= balanced * 1.08;
+    cards.push({
+      label: "Balanced Price (EST)",
+      infoKey: "sym:BTC.BALANCED_PRICE_EST",
+      value: isFiniteNumber(balanced) ? fmtUsd(balanced) : "-",
+      sub: balancedGap === null ? "No live data" : "Gap to spot: "+fmtPct(balancedGap),
+      threshold: "Context: spot <= Balanced Price",
+      note: balancedActive ? "Spot is pressing into a deeper valuation band." : (balancedWatch ? "Spot is close to the estimated balanced band." : "The balanced band still sits below spot as extra support."),
+      level: statusLevel(balancedActive, balancedWatch),
+    });
+
+    var deltaUsable = isFiniteNumber(price) && isFiniteNumber(delta) && delta > 0;
+    var deltaGap = deltaUsable ? (price / delta) - 1 : null;
+    var deltaActive = deltaGap !== null && price <= delta;
+    var deltaWatch = deltaGap !== null && !deltaActive && price <= delta * 1.12;
+    cards.push({
+      label: "Delta Price",
+      infoKey: "sym:BTC.DELTA_PRICE",
+      value: deltaUsable ? fmtUsd(delta) : "-",
+      sub: deltaGap === null ? "Proxy not usable yet or no positive value." : "Gap to spot: "+fmtPct(deltaGap),
+      threshold: "Context: spot <= Delta Price",
+      note: deltaActive ? "The market is testing a very deep fundamental floor." : (deltaWatch ? "Spot is moving toward the deepest value band." : "Delta Price still acts as the emergency floor below market."),
+      level: statusLevel(deltaActive, deltaWatch),
+    });
+
+    var ceilingGap = isFiniteNumber(price) && isFiniteNumber(twoYearMaX5) && twoYearMaX5 !== 0 ? (price / twoYearMaX5) - 1 : null;
+    cards.push({
+      label: "2-Year MA × 5",
+      infoKey: "sym:BTC.TWO_YEAR_MA_X5",
+      value: isFiniteNumber(twoYearMaX5) ? fmtUsd(twoYearMaX5) : "-",
+      sub: ceilingGap === null ? "No live data" : "Gap to cycle ceiling: " + fmtPct(ceilingGap),
+      threshold: "Context: classic cycle ceiling",
+      note: ceilingGap === null ? "No multiplier band available." : "Not meant as a bottom trigger, but as macro context for remaining upside room versus historic top zones.",
+      level: "idle",
+    });
+
+    var coreValue = priceActive || mvrvActive || twoYearActive || ma200wActive;
+    var capitulation = nuplActive || puellActive || maActive || rsiActive || fearActive;
+    var stateLevel = "watch";
+    var stateTitle = "Observe";
+    var stateCopy = "There is no full confluence yet between value, capitulation, and trend weakness. Keep base DCA running or wait for more stress.";
+
+    if (availableCount < 5) {
+      stateTitle = "Limited Coverage";
+      stateCopy = "Not every live proxy signal is available. Use the action matrix with extra caution.";
+    } else if ((priceActive || twoYearActive || ma200wActive) && mvrvActive && capitulation) {
+      stateLevel = "accelerate";
+      stateTitle = "Accelerate DCA";
+      stateCopy = "Fundamental undervaluation is aligning with capitulation and stress confirmation. This is the strongest phase-one setup for more aggressive accumulation.";
+    } else if (coreValue || score >= 5) {
+      stateLevel = "build";
+      stateTitle = "Accumulate";
+      stateCopy = "Multiple value signals are active or close to trigger. Build in phases and keep dry powder for deeper stress.";
+    }
+
+    return {
+      cards: cards,
+      rows: rows,
+      score: score,
+      maxScore: maxScore,
+      stateLevel: stateLevel,
+      stateTitle: stateTitle,
+      stateCopy: stateCopy,
+      availableCount: availableCount,
+    };
+  }
+
+  function renderMacro(metrics, periods, res, histories) {
+    var model = buildMacroModel(metrics);
+    var presetConfig = getMacroPresetConfig(model);
+    var priceChange = pctChangeFromPoints(histories["BTC.PRICE_USD"] || []);
+    var realizedGap = isFiniteNumber(metrics["BTC.PRICE_USD"]) && isFiniteNumber(metrics["BTC.REALIZED_PRICE"]) && metrics["BTC.REALIZED_PRICE"] !== 0
+      ? (metrics["BTC.PRICE_USD"] / metrics["BTC.REALIZED_PRICE"]) - 1
+      : null;
+    var twoYearGap = isFiniteNumber(metrics["BTC.PRICE_USD"]) && isFiniteNumber(metrics["BTC.TWO_YEAR_MA"]) && metrics["BTC.TWO_YEAR_MA"] !== 0
+      ? (metrics["BTC.PRICE_USD"] / metrics["BTC.TWO_YEAR_MA"]) - 1
+      : null;
+    var ma200wGap = isFiniteNumber(metrics["BTC.PRICE_USD"]) && isFiniteNumber(metrics["BTC.MA200W"]) && metrics["BTC.MA200W"] !== 0
+      ? (metrics["BTC.PRICE_USD"] / metrics["BTC.MA200W"]) - 1
+      : null;
+    var ceilingGap = isFiniteNumber(metrics["BTC.PRICE_USD"]) && isFiniteNumber(metrics["BTC.TWO_YEAR_MA_X5"]) && metrics["BTC.TWO_YEAR_MA_X5"] !== 0
+      ? (metrics["BTC.PRICE_USD"] / metrics["BTC.TWO_YEAR_MA_X5"]) - 1
+      : null;
+    var regimeBadge = {
+      watch: { badge: "rgba(255,193,107,0.94)", textColor: "#3a2403", sub: "Wait for more confluence" },
+      build: { badge: "rgba(85,255,179,0.94)", textColor: "#042415", sub: "Value zone is building" },
+      accelerate: { badge: "rgba(248,113,113,0.94)", textColor: "#320b0b", sub: "Maximum DCA focus" }
+    }[model.stateLevel] || { badge: "rgba(255,193,107,0.94)", textColor: "#3a2403", sub: "Wait for more confluence" };
+    var baseZones = [
+      isFiniteNumber(metrics["BTC.REALIZED_PRICE"]) && isFiniteNumber(metrics["BTC.DELTA_PRICE"]) && metrics["BTC.REALIZED_PRICE"] > 0 && metrics["BTC.DELTA_PRICE"] > 0
+        ? {
+            id: "deep-value",
+            top: metrics["BTC.REALIZED_PRICE"],
+            bottom: metrics["BTC.DELTA_PRICE"],
+            label: "Deep Value Zone",
+            fill: "rgba(85,255,179,0.08)",
+            badge: "rgba(7,22,16,0.82)",
+            color: "#55ffb3"
+          }
+        : null,
+      isFiniteNumber(metrics["BTC.TWO_YEAR_MA"]) && isFiniteNumber(metrics["BTC.MA200W"]) && metrics["BTC.TWO_YEAR_MA"] > 0 && metrics["BTC.MA200W"] > 0
+        ? {
+            id: "macro-support",
+            top: Math.max(metrics["BTC.TWO_YEAR_MA"], metrics["BTC.MA200W"]),
+            bottom: Math.min(metrics["BTC.TWO_YEAR_MA"], metrics["BTC.MA200W"]),
+            label: "Macro Support Zone",
+            fill: "rgba(138,180,255,0.08)",
+            badge: "rgba(7,22,16,0.82)",
+            color: "#8ab4ff"
+          }
+        : null
+    ].filter(Boolean);
+    var baseLines = [
+      isFiniteNumber(metrics["BTC.REALIZED_PRICE"]) ? { id: "realized", value: metrics["BTC.REALIZED_PRICE"], label: "Realized", color: "rgba(61,214,181,0.55)", badge: "rgba(61,214,181,0.92)", textColor: "#042415" } : null,
+      isFiniteNumber(metrics["BTC.DELTA_PRICE"]) && metrics["BTC.DELTA_PRICE"] > 0 ? { id: "delta", value: metrics["BTC.DELTA_PRICE"], label: "Delta", color: "rgba(255,143,125,0.55)", badge: "rgba(255,143,125,0.92)", textColor: "#320b0b" } : null,
+      isFiniteNumber(metrics["BTC.TWO_YEAR_MA"]) ? { id: "2y", value: metrics["BTC.TWO_YEAR_MA"], label: "2Y MA", color: "rgba(138,180,255,0.55)", badge: "rgba(138,180,255,0.92)", textColor: "#0b1732" } : null,
+      isFiniteNumber(metrics["BTC.MA200W"]) ? { id: "200w", value: metrics["BTC.MA200W"], label: "200W MA", color: "rgba(244,114,182,0.55)", badge: "rgba(244,114,182,0.92)", textColor: "#33071c" } : null,
+      isFiniteNumber(metrics["BTC.TWO_YEAR_MA_X5"]) ? { id: "2yx5", value: metrics["BTC.TWO_YEAR_MA_X5"], label: "2Y MA × 5", color: "rgba(148,163,184,0.55)", badge: "rgba(148,163,184,0.92)", textColor: "#111827", dash: [6, 6] } : null
+    ].filter(Boolean);
+    var chartAnnotations = {
+      regime: {
+        label: model.stateTitle,
+        subLabel: presetConfig.regimeSub || regimeBadge.sub,
+        badge: regimeBadge.badge,
+        textColor: regimeBadge.textColor,
+      },
+      zones: baseZones.filter(function(zone) { return presetConfig.zoneIds.indexOf(zone.id) !== -1; }),
+      lines: baseLines.filter(function(line) { return presetConfig.lineIds.indexOf(line.id) !== -1; })
+    };
+
+    macroTrendGridEl.innerHTML = [
+      {
+        label: "Spot Change",
+        infoKey: "trend-spot-change",
+        value: priceChange === null ? "-" : fmtPct(priceChange),
+        copy: "Price change over the selected period and resolution."
+      },
+      {
+        label: "Gap to Realized",
+        infoKey: "macro-spot-realized",
+        value: realizedGap === null ? "-" : fmtPct(realizedGap),
+        copy: "Negative means BTC is trading at or below on-chain cost basis."
+      },
+      {
+        label: "Gap to 2-Year MA",
+        infoKey: "sym:BTC.TWO_YEAR_MA",
+        value: twoYearGap === null ? "-" : fmtPct(twoYearGap),
+        copy: "Negative means BTC has returned to the classic half-cycle value band."
+      },
+      {
+        label: "Gap to 200-Week MA",
+        infoKey: "sym:BTC.MA200W",
+        value: ma200wGap === null ? "-" : fmtPct(ma200wGap),
+        copy: "Negative means BTC is testing the long-term floor."
+      },
+      {
+        label: "Weekly RSI",
+        infoKey: "sym:BTC.WEEKLY_RSI14",
+        value: isFiniteNumber(metrics["BTC.WEEKLY_RSI14"]) ? metrics["BTC.WEEKLY_RSI14"].toFixed(1) : "-",
+        copy: "Momentum timer for capitulation and DCA acceleration."
+      },
+      {
+        label: "Gap to 2Y MA × 5",
+        infoKey: "sym:BTC.TWO_YEAR_MA_X5",
+        value: ceilingGap === null ? "-" : fmtPct(ceilingGap),
+        copy: "Context for distance to the classic multiplier ceiling."
+      }
+    ].map(function(item) {
+      return '<article class="macro-trend-tile">'+
+        '<div class="macro-trend-label">'+renderInfoLabel(item.label, item.infoKey)+'</div>'+
+        '<div class="macro-trend-value">'+esc(item.value)+'</div>'+
+        '<div class="macro-trend-copy">'+esc(item.copy)+'</div>'+
+      '</article>';
+    }).join("");
+
+    macroSignalsEl.innerHTML = model.cards.map(function(card) {
+      return '<article class="macro-kpi" data-level="'+esc(card.level)+'">'+
+        '<div class="macro-kpi-top"><span class="macro-kpi-label">'+renderInfoLabel(card.label, card.infoKey)+'</span><span class="macro-chip '+esc(card.level)+'">'+esc(chipText(card.level))+'</span></div>'+
+        '<div class="macro-kpi-value">'+esc(card.value)+'</div>'+
+        '<div class="macro-kpi-sub">'+esc(card.sub)+'</div>'+
+        '<div class="macro-kpi-threshold">'+esc(card.threshold)+'</div>'+
+        '<p class="macro-kpi-note">'+esc(card.note)+'</p>'+
+      '</article>';
+    }).join("");
+
+    macroMatrixBodyEl.innerHTML = model.rows.map(function(row) {
+      return '<tr>'+
+        '<td>'+renderInfoLabel(row.label, row.infoKey)+'</td>'+
+        '<td>'+esc(row.current)+'</td>'+
+        '<td>'+esc(row.threshold)+'</td>'+
+        '<td><span class="macro-chip '+esc(row.level)+'">'+esc(chipText(row.level))+'</span></td>'+
+        '<td>'+esc(row.interpretation)+'</td>'+
+        '<td>'+esc(row.action)+'</td>'+
+      '</tr>';
+    }).join("");
+
+    macroStateEl.setAttribute("data-level", model.stateLevel);
+    macroStateTitleEl.textContent = model.stateTitle;
+    macroStateCopyEl.textContent = model.stateCopy;
+    macroStateScoreEl.textContent = model.score + " / " + model.maxScore;
+    macroPresetCopyEl.textContent = presetConfig.copy;
+    macroModelCache = model;
+    macroProxyNoteEl.textContent = "This view currently uses live: Realized Price, MVRV Ratio, 2-Year MA, 2-Year MA x 5, 200-Week MA, Weekly RSI, NUPL, Puell Multiple, Price / 200d MA, Fear & Greed, Balanced Price (EST), and Delta Price. Reserve Risk, ATS, aSOPR, and Anchored VWAP are still missing from the live layer.";
+    macroStatusEl.textContent = model.availableCount + " live proxy signals · " + periodLabel(periods, res) + " · " + shortTime();
+    updateFocusSummary();
+    drawMacroChart(histories, chartAnnotations, presetConfig);
+  }
+
   // ── Main loader ──
-  async function loadAll() {
+  async function loadDashboard() {
     var periods = Number(periodsEl.value);
     var res = resEl.value;
     var cat = catEl.value;
@@ -619,7 +2283,6 @@
     var now = Math.floor(Date.now()/1000);
     var fromTs = periods > 0 ? now - (periods * bucket) : 0;
 
-    writeHashState();
     statusEl.textContent = "Loading…";
     destroyCardCharts();
     cardsEl.innerHTML = "";
@@ -687,13 +2350,390 @@
       }
     }
 
-    var periodLabel = periods > 0 ? periods+" × "+res.replace("1","") : "All Time · "+res.replace("1","");
-    statusEl.textContent = symbols.length+" symbols · "+periodLabel+" · "+shortTime();
+    statusEl.textContent = symbols.length+" symbols · "+periodLabel(periods, res)+" · "+shortTime();
+  }
+
+  async function loadMacro() {
+    var periods = Number(periodsEl.value);
+    var res = resEl.value;
+    var bucket = RES_SEC[res] || 86400;
+    var now = Math.floor(Date.now()/1000);
+    var fromTs = periods > 0 ? now - (periods * bucket) : 0;
+
+    macroStatusEl.textContent = "Loading macro signals…";
+    macroCache = null;
+    macroModelCache = null;
+    updateFocusSummary();
+
+    var results = await Promise.all(MACRO_REQUIRED_SYMBOLS.map(function(sym) {
+      return getJson("/metrics/"+encodeURIComponent(sym))
+        .then(function(data) { return { symbol: sym, latest: data }; })
+        .catch(function() { return { symbol: sym, latest: null }; });
+    }));
+    var historyResults = await Promise.all(MACRO_CHART_SYMBOLS.map(function(sym) {
+      return getJson(histUrl(sym, fromTs, now, res))
+        .then(function(data) { return { symbol: sym, data: data.data || [] }; })
+        .catch(function() { return { symbol: sym, data: [] }; });
+    }));
+
+    var metrics = {};
+    results.forEach(function(item) {
+      if (item.latest && isFiniteNumber(Number(item.latest.value))) {
+        metrics[item.symbol] = Number(item.latest.value);
+      }
+    });
+    var histories = {};
+    historyResults.forEach(function(item) {
+      histories[item.symbol] = item.data || [];
+    });
+
+    macroCache = { metrics: metrics, periods: periods, res: res, histories: histories };
+    renderMacro(metrics, periods, res, histories);
+  }
+
+  // ── Deep Analysis loader ──
+  function destroyDaCharts() {
+    daChartInstances.forEach(function(c){c.destroy();});
+    daChartInstances = [];
+  }
+
+  function drawDaOscillator(canvas, points, color, thresholdVal, zoneBelow) {
+    var res = resEl.value;
+    var labels = points.map(function(p){return tsLabel(p.timestamp, res);});
+    var values = points.map(function(p){return Number(p.value);});
+    var ch = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          borderColor: color,
+          borderWidth: 1.8,
+          fill: false,
+          pointRadius: 0,
+          tension: 0.2
+        }]
+      },
+      plugins: [{
+        id: "thresholdZone",
+        beforeDraw: function(chart) {
+          var yAxis = chart.scales.y;
+          var ctx = chart.ctx;
+          var yPx = yAxis.getPixelForValue(thresholdVal);
+          if (yPx < yAxis.top || yPx > yAxis.bottom) return;
+          ctx.save();
+          ctx.fillStyle = zoneBelow ? "rgba(74,222,128,0.08)" : "rgba(248,113,113,0.08)";
+          if (zoneBelow) {
+            ctx.fillRect(chart.chartArea.left, yPx, chart.chartArea.right - chart.chartArea.left, chart.chartArea.bottom - yPx);
+          } else {
+            ctx.fillRect(chart.chartArea.left, chart.chartArea.top, chart.chartArea.right - chart.chartArea.left, yPx - chart.chartArea.top);
+          }
+          // threshold line
+          ctx.beginPath();
+          ctx.moveTo(chart.chartArea.left, yPx);
+          ctx.lineTo(chart.chartArea.right, yPx);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "rgba(255,255,255,0.25)";
+          ctx.setLineDash([5, 4]);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }, crosshairPlugin],
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { display: false }, tooltip: {
+          backgroundColor: "rgba(4,17,13,0.92)", borderColor: "#245540", borderWidth: 1,
+          titleColor: "#55ffb3", bodyColor: "#dff9ed", titleFont: { size: 10 }, bodyFont: { size: 10 },
+          displayColors: false,
+          callbacks: { label: function(ctx) { return fmtNum(ctx.parsed.y); } }
+        }},
+        scales: {
+          x: { ticks: { color: "#8db8a6", maxTicksLimit: 10, maxRotation: 0, font: { size: 10 } }, grid: { color: "#1a3d2e" } },
+          y: { ticks: { color: "#8db8a6", maxTicksLimit: 6, font: { size: 10 } }, grid: { color: "#1a3d2e" } }
+        }
+      }
+    });
+    daChartInstances.push(ch);
+    return ch;
+  }
+
+  function drawDaBarChart(canvas, inflowPts, outflowPts) {
+    var res = resEl.value;
+    // Merge timestamps
+    var tsMap = {};
+    inflowPts.forEach(function(p){ tsMap[p.timestamp] = { inflow: Number(p.value) }; });
+    outflowPts.forEach(function(p){
+      if (!tsMap[p.timestamp]) tsMap[p.timestamp] = {};
+      tsMap[p.timestamp].outflow = Number(p.value);
+    });
+    var sortedTs = Object.keys(tsMap).map(Number).sort(function(a,b){return a-b;});
+    var labels = sortedTs.map(function(ts){return tsLabel(ts, res);});
+    var netValues = sortedTs.map(function(ts){
+      var d = tsMap[ts]; return ((d.outflow||0) - (d.inflow||0));
+    });
+    var bgColors = netValues.map(function(v){ return v >= 0 ? "rgba(74,222,128,0.7)" : "rgba(248,113,113,0.7)"; });
+    var borderColors = netValues.map(function(v){ return v >= 0 ? "#4ade80" : "#f87171"; });
+    var ch = new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          data: netValues,
+          backgroundColor: bgColors,
+          borderColor: borderColors,
+          borderWidth: 1
+        }]
+      },
+      plugins: [crosshairPlugin],
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { display: false }, tooltip: {
+          backgroundColor: "rgba(4,17,13,0.92)", borderColor: "#245540", borderWidth: 1,
+          titleColor: "#55ffb3", bodyColor: "#dff9ed",
+          callbacks: { label: function(ctx) { return "Net Flow: " + fmtNum(ctx.parsed.y) + " BTC"; } }
+        }},
+        scales: {
+          x: { ticks: { color: "#8db8a6", maxTicksLimit: 10, maxRotation: 0, font: { size: 10 } }, grid: { color: "#1a3d2e" } },
+          y: { ticks: { color: "#8db8a6", maxTicksLimit: 6, font: { size: 10 } }, grid: { color: "#1a3d2e" } }
+        }
+      }
+    });
+    daChartInstances.push(ch);
+    return ch;
+  }
+
+  function drawDaDualAxis(canvas, pricePts, overlayPts, overlayLabel, overlayColor) {
+    var res = resEl.value;
+    var tsSet = new Set();
+    pricePts.forEach(function(p){tsSet.add(p.timestamp);});
+    overlayPts.forEach(function(p){tsSet.add(p.timestamp);});
+    var sortedTs = Array.from(tsSet).sort(function(a,b){return a-b;});
+    function toMap(arr){var m=new Map();arr.forEach(function(p){m.set(p.timestamp,Number(p.value));});return m;}
+    var pm = toMap(pricePts), om = toMap(overlayPts);
+    var labels = sortedTs.map(function(ts){return tsLabel(ts, res);});
+
+    var ch = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          { label: "BTC Price", data: sortedTs.map(function(t){return pm.get(t)||null;}), borderColor: "#5dffba", borderWidth: 1.8, fill: false, pointRadius: 0, tension: 0.2, spanGaps: true, yAxisID: "y" },
+          { label: overlayLabel, data: sortedTs.map(function(t){return om.get(t)||null;}), borderColor: overlayColor, borderWidth: 1.8, fill: false, pointRadius: 0, tension: 0.2, spanGaps: true, yAxisID: "y1" }
+        ]
+      },
+      plugins: [crosshairPlugin],
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: true, labels: { color: "#8db8a6", font: { size: 10 } } },
+          tooltip: {
+            backgroundColor: "rgba(4,17,13,0.92)", borderColor: "#245540", borderWidth: 1,
+            titleColor: "#55ffb3", bodyColor: "#dff9ed",
+            callbacks: { label: function(ctx) { return " " + ctx.dataset.label + ": " + fmtNum(ctx.parsed.y); } }
+          }
+        },
+        scales: {
+          x: { ticks: { color: "#8db8a6", maxTicksLimit: 10, maxRotation: 0, font: { size: 10 } }, grid: { color: "#1a3d2e" } },
+          y: { position: "left", ticks: { color: "#5dffba", maxTicksLimit: 6, callback: function(v){return "$"+fmtNum(v);}, font: { size: 10 } }, grid: { color: "#1a3d2e" } },
+          y1: { position: "right", ticks: { color: overlayColor, maxTicksLimit: 6, font: { size: 10 } }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+    daChartInstances.push(ch);
+    return ch;
+  }
+
+  function detectDivergence(pricePts, addrPts) {
+    // Simple 30-day trend divergence: price trending down, addresses trending up
+    if (!pricePts || pricePts.length < 5 || !addrPts || addrPts.length < 5) return false;
+    var pSlice = pricePts.slice(-30);
+    var aSlice = addrPts.slice(-30);
+    if (pSlice.length < 5 || aSlice.length < 5) return false;
+    var pFirst = Number(pSlice[0].value), pLast = Number(pSlice[pSlice.length-1].value);
+    var aFirst = Number(aSlice[0].value), aLast = Number(aSlice[aSlice.length-1].value);
+    if (pFirst === 0 || aFirst === 0) return false;
+    var pChange = (pLast - pFirst) / pFirst;
+    var aChange = (aLast - aFirst) / aFirst;
+    return pChange < -0.03 && aChange > 0.02;
+  }
+
+  function getAnalysisPresetConfig() {
+    var presets = {
+      overview: {
+        label: "Overview",
+        copy: "Overview shows every analysis module at once.",
+        visible: { gauge: true, flows: true, fundamentals: true, bottom: true },
+      },
+      flows: {
+        label: "Capital Flows Focus",
+        copy: "Capital Flows Focus emphasizes exchange flows, whales, and miner capitulation.",
+        visible: { gauge: true, flows: true, fundamentals: false, bottom: false },
+      },
+      fundamentals: {
+        label: "Fundamentals Focus",
+        copy: "Fundamentals Focus zooms in on active addresses, fee pressure, and network demand versus price.",
+        visible: { gauge: true, flows: false, fundamentals: true, bottom: false },
+      },
+      bottom: {
+        label: "Bottom Signals Focus",
+        copy: "Bottom Signals Focus shows only the classic bottom indicators and gauge confluence.",
+        visible: { gauge: true, flows: false, fundamentals: false, bottom: true },
+      }
+    };
+    return presets[activeAnalysisPreset] || presets.overview;
+  }
+
+  function renderAnalysisPreset(symCount, periods, res) {
+    var preset = getAnalysisPresetConfig();
+
+    analysisSections.forEach(function(section) {
+      var key = section.getAttribute("data-analysis-section");
+      var visible = !!preset.visible[key];
+      section.classList.toggle("analysis-focus-hidden", !visible);
+      section.classList.toggle("analysis-focus-active", visible && key !== "gauge" && activeAnalysisPreset !== "overview");
+    });
+
+    analysisPresetCopyEl.textContent = preset.copy;
+    analysisStatusEl.textContent = symCount + " active metrics · " + periodLabel(periods, res) + " · " + preset.label + " · " + shortTime();
+    updateFocusSummary();
+
+    requestAnimationFrame(function() {
+      daChartInstances.forEach(function(chart) { chart.resize(); });
+    });
+  }
+
+  async function loadAnalysis() {
+    var periods = Number(periodsEl.value);
+    var res = resEl.value;
+    var bucket = RES_SEC[res] || 86400;
+    var now = Math.floor(Date.now()/1000);
+    var fromTs = periods > 0 ? now - (periods * bucket) : 0;
+
+    analysisStatusEl.textContent = "Loading Deep Analysis…";
+    analysisCache = null;
+    updateFocusSummary();
+    destroyDaCharts();
+
+    var emptyHist = { data: [] };
+    var syms = [
+      "BTC.EXCHANGE_FLOW_IN", "BTC.EXCHANGE_FLOW_OUT",
+      "BTC.PUELL_MULTIPLE", "BTC.PRICE_USD",
+      "BTC.ACTIVE_ADDR_CM", "BTC.ACTIVE_ADDRESSES",
+      "BTC.FEE_TOTAL_USD", "BTC.MVRV_ZSCORE", "BTC.NUPL"
+    ];
+
+    var histResults = await Promise.all(syms.map(function(sym) {
+      return getJson(histUrl(sym, fromTs, now, res))
+        .then(function(d){ return { symbol: sym, data: d.data || [] }; })
+        .catch(function(){ return { symbol: sym, data: [] }; });
+    }));
+
+    var h = {};
+    histResults.forEach(function(item) { h[item.symbol] = item.data; });
+
+    // Bottom Gauge
+    try {
+      var gauge = await getJson("/metrics/bottom-gauge");
+      daGaugeScoreEl.textContent = gauge.score;
+      daGaugeEl.setAttribute("data-level", String(gauge.score));
+      Object.keys(gauge.signals).forEach(function(key) {
+        var el = document.getElementById("dag-" + key);
+        if (el) el.setAttribute("data-on", String(gauge.signals[key]));
+      });
+    } catch(e) {
+      daGaugeScoreEl.textContent = "?";
+    }
+
+    // Exchange Net Flows bar chart
+    if (h["BTC.EXCHANGE_FLOW_IN"].length || h["BTC.EXCHANGE_FLOW_OUT"].length) {
+      drawDaBarChart(
+        document.getElementById("daExFlowChart"),
+        h["BTC.EXCHANGE_FLOW_IN"],
+        h["BTC.EXCHANGE_FLOW_OUT"]
+      );
+    }
+
+    // Puell Multiple oscillator
+    if (h["BTC.PUELL_MULTIPLE"].length) {
+      drawDaOscillator(
+        document.getElementById("daPuellChart"),
+        h["BTC.PUELL_MULTIPLE"],
+        "#c084fc", 0.5, true
+      );
+    }
+
+    // Active Addresses Divergence (prefer CM, fallback to blockchain.info)
+    var addrData = h["BTC.ACTIVE_ADDR_CM"].length ? h["BTC.ACTIVE_ADDR_CM"] : h["BTC.ACTIVE_ADDRESSES"];
+    if (h["BTC.PRICE_USD"].length && addrData.length) {
+      drawDaDualAxis(
+        document.getElementById("daAddrChart"),
+        h["BTC.PRICE_USD"], addrData,
+        "Active Addresses", "#fbbf24"
+      );
+      // Check divergence
+      var div = detectDivergence(h["BTC.PRICE_USD"], addrData);
+      daDivBadgeEl.style.display = div ? "inline-block" : "none";
+    }
+
+    // Transaction Fees
+    if (h["BTC.FEE_TOTAL_USD"].length) {
+      drawDaOscillator(
+        document.getElementById("daFeesChart"),
+        h["BTC.FEE_TOTAL_USD"],
+        "#ffc16b", 0, false
+      );
+    }
+
+    // MVRV Z-Score oscillator
+    if (h["BTC.MVRV_ZSCORE"].length) {
+      drawDaOscillator(
+        document.getElementById("daMvrvZChart"),
+        h["BTC.MVRV_ZSCORE"],
+        "#38bdf8", 0, true
+      );
+    }
+
+    // NUPL oscillator
+    if (h["BTC.NUPL"].length) {
+      drawDaOscillator(
+        document.getElementById("daNuplChart"),
+        h["BTC.NUPL"],
+        "#a78bfa", 0, true
+      );
+    }
+
+    var symCount = syms.filter(function(s){return h[s] && h[s].length > 0;}).length;
+    analysisCache = { symCount: symCount, periods: periods, res: res };
+    renderAnalysisPreset(symCount, periods, res);
+  }
+
+  async function loadAll() {
+    syncView();
+    writeHashState();
+    if (activeView === "analysis") {
+      await loadAnalysis();
+      return;
+    }
+    if (activeView === "macro") {
+      await loadMacro();
+      return;
+    }
+    await loadDashboard();
   }
 
   async function boot() {
+    statusEl.style.color = "var(--muted)";
+    macroStatusEl.style.color = "var(--muted)";
+    analysisStatusEl.style.color = "var(--muted)";
     try { await loadAll(); }
-    catch(err) { statusEl.textContent = "Error: "+err.message; statusEl.style.color = "var(--danger)"; }
+    catch(err) {
+      var target = activeView === "macro" ? macroStatusEl : activeView === "analysis" ? analysisStatusEl : statusEl;
+      target.textContent = "Error: "+err.message;
+      target.style.color = "var(--danger)";
+    }
   }
 
   refreshEl.addEventListener("click", boot);
@@ -705,6 +2745,75 @@
     clearTimeout(window.__st);
     window.__st = setTimeout(boot, 150);
   });
+  tabButtons.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var nextView = btn.getAttribute("data-view");
+      if (!VALID_VIEWS[nextView] || nextView === activeView) return;
+      activeView = nextView;
+      boot();
+    });
+  });
+  macroPresetButtons.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var nextPreset = btn.getAttribute("data-macro-preset");
+      if (!VALID_MACRO_PRESETS[nextPreset] || nextPreset === activeMacroPreset) return;
+      activeMacroPreset = nextPreset;
+      syncView();
+      writeHashState();
+      if (macroCache) {
+        renderMacro(macroCache.metrics, macroCache.periods, macroCache.res, macroCache.histories);
+      }
+    });
+  });
+  analysisPresetButtons.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var nextPreset = btn.getAttribute("data-analysis-preset");
+      if (!VALID_ANALYSIS_PRESETS[nextPreset] || nextPreset === activeAnalysisPreset) return;
+      activeAnalysisPreset = nextPreset;
+      syncView();
+      writeHashState();
+      if (analysisCache) {
+        renderAnalysisPreset(analysisCache.symCount, analysisCache.periods, analysisCache.res);
+      }
+    });
+  });
+
+  document.addEventListener("click", function(e) {
+    var trigger = e.target.closest(".info-trigger");
+    if (trigger) {
+      e.preventDefault();
+      if (activeInfoTrigger === trigger && infoPopoverEl.classList.contains("open")) {
+        closeInfoPopover();
+      } else {
+        openInfoPopover(trigger);
+      }
+      return;
+    }
+    if (infoPopoverEl.classList.contains("open") && !e.target.closest(".info-popover")) {
+      closeInfoPopover();
+    }
+  });
+  document.addEventListener("focusin", function(e) {
+    var trigger = e.target.closest(".info-trigger");
+    if (trigger) {
+      openInfoPopover(trigger);
+      return;
+    }
+    if (infoPopoverEl.classList.contains("open") && !e.target.closest(".info-popover")) {
+      closeInfoPopover();
+    }
+  });
+  infoPopoverCloseEl.addEventListener("click", closeInfoPopover);
+  window.addEventListener("resize", function() {
+    if (activeInfoTrigger && infoPopoverEl.classList.contains("open")) {
+      positionInfoPopover(activeInfoTrigger);
+    }
+  });
+  window.addEventListener("scroll", function() {
+    if (activeInfoTrigger && infoPopoverEl.classList.contains("open")) {
+      positionInfoPopover(activeInfoTrigger);
+    }
+  }, true);
 
   // Reset zoom
   resetZoomEl.addEventListener("click", function(){
@@ -722,13 +2831,28 @@
       mainChartInstance.update();
     });
   });
+  document.querySelectorAll(".legend-item[data-macro-ds]").forEach(function(el){
+    el.addEventListener("click", function(){
+      if (!macroChartInstance) return;
+      var idx = Number(el.getAttribute("data-macro-ds"));
+      var meta = macroChartInstance.getDatasetMeta(idx);
+      if (!meta) return;
+      meta.hidden = !meta.hidden;
+      el.classList.toggle("inactive", meta.hidden);
+      macroChartInstance.update();
+    });
+  });
 
   // Modal
   modalCloseEl.addEventListener("click", closeModal);
   modalEl.addEventListener("click", function(e){ if(e.target===modalEl) closeModal(); });
-  document.addEventListener("keydown", function(e){ if(e.key==="Escape"&&modalEl.classList.contains("open")) closeModal(); });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" && infoPopoverEl.classList.contains("open")) closeInfoPopover();
+    if (e.key === "Escape" && modalEl.classList.contains("open")) closeModal();
+  });
 
   readHashState();
+  syncView();
   boot();
 })();
 </script>

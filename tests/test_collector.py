@@ -5,11 +5,13 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from collector import (
+    _compute_wilder_rsi,
     collect_all,
     collect_btc_blockchain_info,
     collect_btc_blockchair,
     collect_btc_coinmetrics_pricing,
     collect_btc_derived_ma,
+    collect_btc_mvrv_zscore,
     collect_eth_blockchair,
     collect_fear_greed,
 )
@@ -46,6 +48,10 @@ COINMETRICS_RESPONSE = {
             "CapMrktCurUSD": "1338870647177.839",
             "CapMVRVCur": "1.236157058152968281",
             "SplyCur": "20010500.0",
+            "FlowInExNtv": "24000.5",
+            "FlowOutExNtv": "29000.3",
+            "FeeTotNtv": "12.345",
+            "AdrActCnt": "650000",
         }
     ]
 }
@@ -121,6 +127,17 @@ async def test_collect_btc_coinmetrics_pricing_derives_values():
     # Puell multiple with no SMA history → fallback 1.0
     assert metrics["BTC.PUELL_MULTIPLE"] == pytest.approx(1.0)
 
+    # Exchange flows
+    assert metrics["BTC.EXCHANGE_FLOW_IN"] == pytest.approx(24000.5)
+    assert metrics["BTC.EXCHANGE_FLOW_OUT"] == pytest.approx(29000.3)
+    assert metrics["BTC.EXCHANGE_NET_FLOW"] == pytest.approx(29000.3 - 24000.5)
+
+    # Fees (native BTC × price)
+    assert metrics["BTC.FEE_TOTAL_USD"] == pytest.approx(12.345 * btc_price)
+
+    # Active addresses from Coin Metrics
+    assert metrics["BTC.ACTIVE_ADDR_CM"] == pytest.approx(650000.0)
+
 
 @pytest.mark.asyncio
 async def test_collect_btc_coinmetrics_pricing_uses_market_cap_as_fallback_average():
@@ -155,16 +172,34 @@ async def test_collect_fear_greed():
 
 @pytest.mark.asyncio
 async def test_collect_btc_derived_ma():
-    """MA200 ratio and Pi Cycle are derived from stored SMA values."""
+    """Derived macro metrics are computed from stored price history."""
     async def fake_sma(symbol, days, to_ts=None, db_path=None):
-        return {200: 50000.0, 111: 60000.0, 350: 55000.0}.get(days)
+        return {200: 50000.0, 111: 60000.0, 350: 55000.0, 730: 42000.0}.get(days)
+
+    rows = [
+        {"timestamp": 604800 * idx, "value": 30000.0 + (idx * 100.0)}
+        for idx in range(220)
+    ]
 
     with patch("collector.get_daily_sma", side_effect=fake_sma), \
-         patch("storage.get_history", new=AsyncMock(return_value=[{"timestamp": 1, "value": 65000.0}])):
+         patch("collector.get_history", new=AsyncMock(return_value=rows)):
         metrics = await collect_btc_derived_ma()
 
-    assert metrics["BTC.MA200_RATIO"] == pytest.approx(65000.0 / 50000.0)
+    latest_price = rows[-1]["value"]
+    weekly_closes = [row["value"] for row in rows]
+
+    assert metrics["BTC.MA200_RATIO"] == pytest.approx(latest_price / 50000.0)
     assert metrics["BTC.PI_CYCLE"] == pytest.approx(60000.0 / (2 * 55000.0))
+    assert metrics["BTC.TWO_YEAR_MA"] == pytest.approx(42000.0)
+    assert metrics["BTC.TWO_YEAR_MA_X5"] == pytest.approx(210000.0)
+    assert metrics["BTC.MA200W"] == pytest.approx(sum(weekly_closes[-200:]) / 200)
+    assert metrics["BTC.WEEKLY_RSI14"] == pytest.approx(100.0)
+
+
+def test_compute_wilder_rsi_flat_series_returns_neutral():
+    value = _compute_wilder_rsi([100.0] * 20)
+
+    assert value == pytest.approx(50.0)
 
 
 @pytest.mark.asyncio
@@ -184,7 +219,9 @@ async def test_collect_all_aggregates_sources():
 
     with patch("collector._get_json", new=mock_get_json), \
          patch("collector.get_average_metric", new=AsyncMock(return_value=1_100_000_000_000.0)), \
-         patch("collector.get_daily_sma", new=AsyncMock(return_value=None)):
+            patch("collector.get_daily_sma", new=AsyncMock(return_value=None)), \
+            patch("collector.get_history", new=AsyncMock(return_value=[])), \
+            patch("collector.get_std_metric", new=AsyncMock(return_value=None)):
         metrics = await collect_all()
 
     assert "BTC.ACTIVE_ADDRESSES" in metrics
@@ -197,6 +234,10 @@ async def test_collect_all_aggregates_sources():
     assert "BTC.TRANSFERRED_PRICE_EST" in metrics
     assert "BTC.NUPL" in metrics
     assert "BTC.FEAR_GREED_INDEX" in metrics
+    assert "BTC.EXCHANGE_FLOW_IN" in metrics
+    assert "BTC.EXCHANGE_NET_FLOW" in metrics
+    assert "BTC.FEE_TOTAL_USD" in metrics
+    assert "BTC.ACTIVE_ADDR_CM" in metrics
 
 
 @pytest.mark.asyncio
@@ -218,10 +259,43 @@ async def test_collect_all_tolerates_single_source_failure():
 
     with patch("collector._get_json", new=mock_get_json), \
          patch("collector.get_average_metric", new=AsyncMock(return_value=1_100_000_000_000.0)), \
-         patch("collector.get_daily_sma", new=AsyncMock(return_value=None)):
+            patch("collector.get_daily_sma", new=AsyncMock(return_value=None)), \
+            patch("collector.get_history", new=AsyncMock(return_value=[])), \
+            patch("collector.get_std_metric", new=AsyncMock(return_value=None)):
         metrics = await collect_all()
 
     # blockchain.info failed, but other sources still succeeded
     assert "BTC.FEE_MEDIAN" in metrics
     assert "ETH.GAS_PRICE" in metrics
     assert "BTC.REALIZED_PRICE" in metrics
+
+
+@pytest.mark.asyncio
+async def test_collect_btc_mvrv_zscore():
+    """MVRV Z-Score is derived from stored MVRV history."""
+    # Build fake history: 50 data points with known mean and std
+    fake_history = [{"timestamp": i, "value": 1.0 + i * 0.01} for i in range(50)]
+    values = [p["value"] for p in fake_history]
+    mean_val = sum(values) / len(values)
+    var_val = sum((x - mean_val) ** 2 for x in values) / len(values)
+    std_val = var_val ** 0.5
+
+    with patch("collector.get_history", new=AsyncMock(return_value=fake_history)), \
+         patch("collector.get_average_metric", new=AsyncMock(return_value=mean_val)), \
+         patch("collector.get_std_metric", new=AsyncMock(return_value=std_val)):
+        metrics = await collect_btc_mvrv_zscore()
+
+    current = fake_history[-1]["value"]
+    expected_z = (current - mean_val) / std_val
+    assert metrics["BTC.MVRV_ZSCORE"] == pytest.approx(expected_z)
+
+
+@pytest.mark.asyncio
+async def test_collect_btc_mvrv_zscore_insufficient_history():
+    """Returns empty when fewer than 30 data points."""
+    fake_history = [{"timestamp": i, "value": 1.0} for i in range(10)]
+
+    with patch("collector.get_history", new=AsyncMock(return_value=fake_history)):
+        metrics = await collect_btc_mvrv_zscore()
+
+    assert metrics == {}

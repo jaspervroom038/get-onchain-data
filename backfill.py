@@ -91,7 +91,7 @@ async def _fetch_coinmetrics(start_time: str = "2010-01-01") -> list[dict]:
             _COINMETRICS,
             params={
                 "assets": "btc",
-                "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur",
+                "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur,FlowInExNtv,FlowOutExNtv,FeeTotNtv,AdrActCnt",
                 "frequency": "1d",
                 "start_time": start_time,
                 "page_size": 10000,
@@ -146,6 +146,7 @@ async def run_backfill() -> None:
     # Price history for SMA calculations
     daily_prices: list[tuple[int, float]] = []  # (ts, price)
     daily_revenues: list[tuple[int, float]] = []  # (ts, revenue)
+    daily_mvrv: list[float] = []  # for MVRV Z-Score
 
     inserts: list[tuple[str, int, float]] = []
 
@@ -186,6 +187,7 @@ async def run_backfill() -> None:
         miner_revenue = _estimate_daily_revenue(dt, btc_price)
         daily_prices.append((ts, btc_price))
         daily_revenues.append((ts, miner_revenue))
+        daily_mvrv.append(mvrv)
 
         # Puell Multiple: revenue / 365-day SMA of revenue
         puell = 0.0
@@ -231,6 +233,34 @@ async def run_backfill() -> None:
             metrics["BTC.MA200_RATIO"] = ma200_ratio
         if pi_cycle is not None:
             metrics["BTC.PI_CYCLE"] = pi_cycle
+
+        # Exchange flows
+        flow_in_raw = row.get("FlowInExNtv")
+        flow_out_raw = row.get("FlowOutExNtv")
+        if flow_in_raw and flow_out_raw:
+            flow_in = float(flow_in_raw)
+            flow_out = float(flow_out_raw)
+            metrics["BTC.EXCHANGE_FLOW_IN"] = flow_in
+            metrics["BTC.EXCHANGE_FLOW_OUT"] = flow_out
+            metrics["BTC.EXCHANGE_NET_FLOW"] = flow_out - flow_in
+
+        # Total fees (native BTC → estimated USD)
+        fee_tot_raw = row.get("FeeTotNtv")
+        if fee_tot_raw:
+            metrics["BTC.FEE_TOTAL_USD"] = float(fee_tot_raw) * btc_price
+
+        # Active addresses from Coin Metrics
+        adr_act_raw = row.get("AdrActCnt")
+        if adr_act_raw:
+            metrics["BTC.ACTIVE_ADDR_CM"] = float(adr_act_raw)
+
+        # MVRV Z-Score (needs at least 30 days of history)
+        if len(daily_mvrv) >= 30:
+            mean_m = sum(daily_mvrv) / len(daily_mvrv)
+            var_m = sum((x - mean_m) ** 2 for x in daily_mvrv) / len(daily_mvrv)
+            std_m = var_m ** 0.5
+            if std_m > 0:
+                metrics["BTC.MVRV_ZSCORE"] = (mvrv - mean_m) / std_m
 
         for sym, val in metrics.items():
             if not math.isnan(val) and not math.isinf(val):
@@ -352,6 +382,13 @@ async def run_incremental() -> int:
         rev_rows = await cur.fetchall()
         daily_revenues: list[tuple[int, float]] = list(reversed(rev_rows))
 
+        # All MVRV values (for Z-Score)
+        cur = await db.execute(
+            "SELECT value FROM metrics WHERE symbol = 'BTC.MVRV' ORDER BY timestamp"
+        )
+        mvrv_rows = await cur.fetchall()
+        daily_mvrv: list[float] = [float(r[0]) for r in mvrv_rows]
+
     # ── 5. Derive metrics for each new CM day ──────────────────────
     inserts: list[tuple[str, int, float]] = []
 
@@ -387,6 +424,7 @@ async def run_incremental() -> int:
         miner_revenue = _estimate_daily_revenue(dt, btc_price)
         daily_prices.append((ts, btc_price))
         daily_revenues.append((ts, miner_revenue))
+        daily_mvrv.append(mvrv)
 
         # Puell
         puell = 0.0
@@ -431,6 +469,34 @@ async def run_incremental() -> int:
             metrics["BTC.MA200_RATIO"] = ma200_ratio
         if pi_cycle is not None:
             metrics["BTC.PI_CYCLE"] = pi_cycle
+
+        # Exchange flows
+        flow_in_raw = row.get("FlowInExNtv")
+        flow_out_raw = row.get("FlowOutExNtv")
+        if flow_in_raw and flow_out_raw:
+            flow_in = float(flow_in_raw)
+            flow_out = float(flow_out_raw)
+            metrics["BTC.EXCHANGE_FLOW_IN"] = flow_in
+            metrics["BTC.EXCHANGE_FLOW_OUT"] = flow_out
+            metrics["BTC.EXCHANGE_NET_FLOW"] = flow_out - flow_in
+
+        # Total fees (native BTC → estimated USD)
+        fee_tot_raw = row.get("FeeTotNtv")
+        if fee_tot_raw:
+            metrics["BTC.FEE_TOTAL_USD"] = float(fee_tot_raw) * btc_price
+
+        # Active addresses from Coin Metrics
+        adr_act_raw = row.get("AdrActCnt")
+        if adr_act_raw:
+            metrics["BTC.ACTIVE_ADDR_CM"] = float(adr_act_raw)
+
+        # MVRV Z-Score (needs at least 30 days of history)
+        if len(daily_mvrv) >= 30:
+            mean_m = sum(daily_mvrv) / len(daily_mvrv)
+            var_m = sum((x - mean_m) ** 2 for x in daily_mvrv) / len(daily_mvrv)
+            std_m = var_m ** 0.5
+            if std_m > 0:
+                metrics["BTC.MVRV_ZSCORE"] = (mvrv - mean_m) / std_m
 
         for sym, val in metrics.items():
             if not math.isnan(val) and not math.isinf(val):
