@@ -88,16 +88,36 @@ SYMBOL_META: dict[str, dict[str, Any]] = {
         "description": "Ethereum Transactions (24 h)",
         "unit": "transactions",
     },
+    "BTC.MARKET_CAP": {
+        "description": "Bitcoin Market Capitalization",
+        "unit": "USD",
+    },
+    "BTC.MVRV": {
+        "description": "Bitcoin MVRV Ratio",
+        "unit": "ratio",
+    },
+    "BTC.CIRCULATING_SUPPLY": {
+        "description": "Bitcoin Circulating Supply",
+        "unit": "BTC",
+    },
+    "BTC.REALIZED_CAP": {
+        "description": "Bitcoin Realized Capitalization",
+        "unit": "USD",
+    },
+    "BTC.AVERAGE_CAP": {
+        "description": "Bitcoin Average Market Cap (running average)",
+        "unit": "USD",
+    },
     "BTC.REALIZED_PRICE": {
         "description": "Bitcoin Realized Price (avg on-chain cost basis)",
         "unit": "USD",
     },
-    "BTC.TRANSFERRED_PRICE": {
-        "description": "Bitcoin Transferred Price (time/volume-weighted spending)",
+    "BTC.TRANSFERRED_PRICE_EST": {
+        "description": "Bitcoin Transferred Price (estimated proxy)",
         "unit": "USD",
     },
-    "BTC.BALANCED_PRICE": {
-        "description": "Bitcoin Balanced Price (fair value indicator)",
+    "BTC.BALANCED_PRICE_EST": {
+        "description": "Bitcoin Balanced Price (estimated proxy)",
         "unit": "USD",
     },
     "BTC.DELTA_PRICE": {

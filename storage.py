@@ -76,3 +76,21 @@ async def list_symbols(db_path: Optional[str] = None) -> list[str]:
         cursor = await db.execute("SELECT DISTINCT symbol FROM metrics ORDER BY symbol")
         rows = await cursor.fetchall()
     return [row[0] for row in rows]
+
+
+async def get_average_metric(
+    symbol: str,
+    db_path: Optional[str] = None,
+) -> Optional[float]:
+    """Return the arithmetic average value for a symbol, or None if empty."""
+    path = db_path or settings.db_path
+    async with aiosqlite.connect(path) as db:
+        cursor = await db.execute(
+            "SELECT AVG(value) FROM metrics WHERE symbol = ?",
+            (symbol,),
+        )
+        row = await cursor.fetchone()
+
+    if row is None or row[0] is None:
+        return None
+    return float(row[0])

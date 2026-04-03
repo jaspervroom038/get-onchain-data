@@ -25,21 +25,26 @@ A Python service that **periodically collects on-chain crypto metrics**, stores 
 | `BTC.FEE_MEDIAN` | Median Bitcoin transaction fee (satoshis) | Blockchair |
 | `ETH.GAS_PRICE` | Average Ethereum gas price (Gwei) | Blockchair |
 | `ETH.TRANSACTION_COUNT` | Confirmed Ethereum transactions (24 h) | Blockchair |
-| `BTC.REALIZED_PRICE` | Bitcoin Realized Price — avg on-chain cost basis (USD) | Glassnode |
-| `BTC.TRANSFERRED_PRICE` | Bitcoin Transferred Price — time/volume-weighted spending (USD) | Glassnode (derived) |
-| `BTC.BALANCED_PRICE` | Bitcoin Balanced Price — fair value indicator (USD) | Glassnode |
-| `BTC.DELTA_PRICE` | Bitcoin Delta Price — fundamental/technical floor model (USD) | Glassnode |
+| `BTC.MARKET_CAP` | Bitcoin market capitalization (USD) | Coin Metrics Community API |
+| `BTC.MVRV` | Bitcoin MVRV ratio (market cap / realized cap) | Coin Metrics Community API |
+| `BTC.CIRCULATING_SUPPLY` | Bitcoin circulating supply (BTC) | Coin Metrics Community API |
+| `BTC.REALIZED_CAP` | Bitcoin realized capitalization (USD, derived) | Coin Metrics + derived |
+| `BTC.AVERAGE_CAP` | Running average bitcoin market cap in local DB (USD, derived) | Local DB + derived |
+| `BTC.REALIZED_PRICE` | Bitcoin Realized Price — avg on-chain cost basis (USD, derived) | Coin Metrics + derived |
+| `BTC.DELTA_PRICE` | Bitcoin Delta Price — fundamental/technical floor model (USD, derived) | Coin Metrics + local average cap |
+| `BTC.TRANSFERRED_PRICE_EST` | Bitcoin Transferred Price estimate (USD, proxy) | Heuristic estimate |
+| `BTC.BALANCED_PRICE_EST` | Bitcoin Balanced Price estimate (USD, proxy) | Heuristic estimate |
 
-> **Note:** The four pricing metrics (`BTC.REALIZED_PRICE`, `BTC.TRANSFERRED_PRICE`, `BTC.BALANCED_PRICE`, `BTC.DELTA_PRICE`) require a `GLASSNODE_API_KEY`. Without a key, these metrics are simply skipped and the remaining collectors continue to work normally.
+> **Note:** Pricing metrics are computed from the free Coin Metrics Community API plus local historical averages in SQLite. No paid Glassnode subscription is required.
 
 ### How to read the on-chain pricing metrics
 
 | Metric | What it means |
 |---|---|
 | **Realized Price** | The average on-chain cost basis of the market — Realized Cap divided by circulating supply. It tells you the average price at which every coin last moved on-chain. |
-| **Transferred Price** | A time- and volume-weighted measure of historical spending activity. It corrects for how many "old" coins were spent at much lower prices. |
-| **Balanced Price** | Realized Price − Transferred Price. Glassnode considers this roughly a "fair value" floor that tends to be reached at the end of bear markets. |
-| **Delta Price** | (Realized Cap − Average Cap) / Circulating Supply. A hybrid fundamental/technical bottom model that has historically marked final cycle lows. |
+| **Transferred Price (EST)** | A proxy estimate derived from the modeled balanced-floor signal. It is clearly labeled as an estimate and not an exact Glassnode equivalent. |
+| **Balanced Price (EST)** | A proxy fair-value floor based on the locally derived Delta Price signal. Clearly labeled as estimate. |
+| **Delta Price** | (Realized Cap − Average Cap) / Circulating Supply, where Average Cap is the running average market cap stored locally. |
 
 ---
 
@@ -68,7 +73,6 @@ cp .env.example .env
 | `PORT` | `8000` | HTTP server port |
 | `COLLECT_INTERVAL_SECONDS` | `3600` | How often to fetch new metrics |
 | `DB_PATH` | `onchain_metrics.db` | SQLite database file path |
-| `GLASSNODE_API_KEY` | *(empty)* | Glassnode API key for pricing metrics (optional) |
 
 ### 3. Run
 

@@ -68,6 +68,14 @@ def test_udf_symbols_known():
     assert "supported_resolutions" in data
 
 
+def test_udf_symbols_estimated_pricing_known():
+    response = client.get("/udf/symbols", params={"symbol": "BTC.BALANCED_PRICE_EST"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "BTC.BALANCED_PRICE_EST"
+    assert data["unit"] == "USD"
+
+
 def test_udf_symbols_unknown():
     response = client.get("/udf/symbols", params={"symbol": "UNKNOWN.SYMBOL"})
     assert response.status_code == 404
@@ -112,8 +120,7 @@ def test_metrics_list():
 
 
 def test_metrics_latest_not_found():
-    response = client.get("/metrics/BTC.HASH_RATE")
-    # No data seeded in this test → 404
+    response = client.get("/metrics/UNKNOWN.SYMBOL")
     assert response.status_code == 404
 
 

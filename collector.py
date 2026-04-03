@@ -10,17 +10,17 @@ BTC.FEE_MEDIAN        – median transaction fee in satoshis
 ETH.GAS_PRICE          – average Ethereum gas price in Gwei
 ETH.TRANSACTION_COUNT  – number of confirmed Ethereum transactions (24 h)
 BTC.REALIZED_PRICE     – average on-chain cost basis of the market (USD)
-BTC.TRANSFERRED_PRICE  – time- & volume-weighted historical spending price (USD)
-BTC.BALANCED_PRICE     – Realized Price − Transferred Price ("fair value") (USD)
 BTC.DELTA_PRICE        – (Realized Cap − Average Cap) / Supply (USD)
+BTC.TRANSFERRED_PRICE_EST – estimated transferred price proxy (USD)
+BTC.BALANCED_PRICE_EST    – estimated balanced price proxy (USD)
 """
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 import httpx
 
-from config import settings
+from storage import get_average_metric
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +28,7 @@ logger = logging.getLogger(__name__)
 _BLOCKCHAIN_INFO_STATS = "https://api.blockchain.info/stats"
 _BLOCKCHAIR_BTC = "https://api.blockchair.com/bitcoin/stats"
 _BLOCKCHAIR_ETH = "https://api.blockchair.com/ethereum/stats"
-
-# Glassnode API (requires API key configured in settings)
-_GLASSNODE_BASE = "https://api.glassnode.com/v1/metrics"
+_COINMETRICS_TIMESERIES = "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics"
 
 # Seconds to wait before giving up on an HTTP request
 _REQUEST_TIMEOUT = 15
@@ -77,69 +75,85 @@ async def collect_eth_blockchair() -> dict[str, float]:
     }
 
 
-async def _glassnode_latest(path: str) -> float:
-    """Fetch the most recent value from a Glassnode metrics endpoint.
-
-    Glassnode returns ``[{"t": <unix>, "v": <value>}, …]``.
-    We take the last element's ``v``.
-    """
+async def _coinmetrics_latest_row() -> dict[str, Any]:
+    """Fetch the latest daily BTC row from Coin Metrics community API."""
     data = await _get_json(
-        f"{_GLASSNODE_BASE}/{path}",
-        params={"a": "BTC", "api_key": settings.glassnode_api_key},
+        _COINMETRICS_TIMESERIES,
+        params={
+            "assets": "btc",
+            "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur",
+            "frequency": "1d",
+            "limit_per_asset": 1,
+        },
     )
-    if not data:
-        raise ValueError(f"Empty response from Glassnode {path}")
-    return float(data[-1]["v"])
+    rows = data.get("data", [])
+    if not rows:
+        raise ValueError("Empty response from Coin Metrics")
+    return rows[-1]
 
 
-async def collect_btc_glassnode() -> dict[str, float]:
-    """Collect Bitcoin on-chain pricing metrics from Glassnode.
+async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
+    """Collect BTC pricing-model inputs from Coin Metrics and derive metrics.
 
-    Requires a valid ``GLASSNODE_API_KEY`` in settings.  Returns an empty
-    dict when no key is configured so the rest of the collectors keep
-    working.
+    The Coin Metrics community API is free and provides:
+    - Market Cap (CapMrktCurUSD)
+    - MVRV (CapMVRVCur)
+    - Circulating Supply (SplyCur)
+
+    Derived metrics:
+    - Realized Cap = Market Cap / MVRV
+    - Realized Price = Realized Cap / Supply
+    - Average Cap = running average of BTC.MARKET_CAP in local storage
+    - Delta Price = (Realized Cap - Average Cap) / Supply
+
+    Transferred/Balanced are not directly available from free sources,
+    so they are exposed as clearly labeled estimates.
 
     Metrics
     -------
-    BTC.REALIZED_PRICE     – Realized Cap / Circulating Supply (USD)
-    BTC.BALANCED_PRICE     – Realized Price − Transferred Price (USD)
-    BTC.TRANSFERRED_PRICE  – Realized Price − Balanced Price (USD, derived)
-    BTC.DELTA_PRICE        – (Realized Cap − Average Cap) / Supply (USD)
+    BTC.MARKET_CAP           – Market capitalization (USD)
+    BTC.MVRV                 – Market Cap / Realized Cap ratio
+    BTC.CIRCULATING_SUPPLY   – circulating supply (BTC)
+    BTC.REALIZED_CAP         – Market Cap / MVRV (USD)
+    BTC.AVERAGE_CAP          – running average Market Cap from local DB (USD)
+    BTC.REALIZED_PRICE       – Realized Cap / Circulating Supply (USD)
+    BTC.DELTA_PRICE          – (Realized Cap − Average Cap) / Supply (USD)
+    BTC.BALANCED_PRICE_EST   – estimated balanced price proxy (USD)
+    BTC.TRANSFERRED_PRICE_EST – estimated transferred price proxy (USD)
     """
-    if not settings.glassnode_api_key:
-        logger.debug("Glassnode API key not configured – skipping")
-        return {}
+    row = await _coinmetrics_latest_row()
 
-    result: dict[str, float] = {}
+    market_cap = float(row["CapMrktCurUSD"])
+    mvrv = float(row["CapMVRVCur"])
+    supply = float(row["SplyCur"])
 
-    # --- Realized Price ---
-    realized: Optional[float] = None
-    try:
-        realized = await _glassnode_latest("market/price_realized_usd")
-        result["BTC.REALIZED_PRICE"] = realized
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Glassnode BTC.REALIZED_PRICE failed: %s", exc)
+    if mvrv <= 0 or supply <= 0:
+        raise ValueError("Invalid Coin Metrics inputs for pricing derivation")
 
-    # --- Balanced Price ---
-    balanced: Optional[float] = None
-    try:
-        balanced = await _glassnode_latest("indicators/balanced_price_usd")
-        result["BTC.BALANCED_PRICE"] = balanced
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Glassnode BTC.BALANCED_PRICE failed: %s", exc)
+    realized_cap = market_cap / mvrv
+    realized_price = realized_cap / supply
 
-    # --- Transferred Price (derived: Realized − Balanced) ---
-    if realized is not None and balanced is not None:
-        result["BTC.TRANSFERRED_PRICE"] = realized - balanced
+    average_cap = await get_average_metric("BTC.MARKET_CAP")
+    if average_cap is None:
+        average_cap = market_cap
 
-    # --- Delta Price ---
-    try:
-        delta = await _glassnode_latest("indicators/delta_price_usd")
-        result["BTC.DELTA_PRICE"] = delta
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Glassnode BTC.DELTA_PRICE failed: %s", exc)
+    delta_price = (realized_cap - average_cap) / supply
 
-    return result
+    # Heuristic proxy: use Delta Price as a balanced-floor estimate.
+    balanced_est = delta_price
+    transferred_est = realized_price - balanced_est
+
+    return {
+        "BTC.MARKET_CAP": market_cap,
+        "BTC.MVRV": mvrv,
+        "BTC.CIRCULATING_SUPPLY": supply,
+        "BTC.REALIZED_CAP": realized_cap,
+        "BTC.AVERAGE_CAP": average_cap,
+        "BTC.REALIZED_PRICE": realized_price,
+        "BTC.DELTA_PRICE": delta_price,
+        "BTC.BALANCED_PRICE_EST": balanced_est,
+        "BTC.TRANSFERRED_PRICE_EST": transferred_est,
+    }
 
 
 async def collect_all() -> dict[str, float]:
@@ -154,7 +168,7 @@ async def collect_all() -> dict[str, float]:
         ("blockchain.info BTC", collect_btc_blockchain_info),
         ("Blockchair BTC", collect_btc_blockchair),
         ("Blockchair ETH", collect_eth_blockchair),
-        ("Glassnode BTC", collect_btc_glassnode),
+        ("Coin Metrics BTC", collect_btc_coinmetrics_pricing),
     ]
 
     for name, collector in collectors:

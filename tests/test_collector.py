@@ -4,7 +4,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from collector import collect_all, collect_btc_blockchain_info, collect_btc_blockchair, collect_eth_blockchair, collect_btc_glassnode
+from collector import (
+    collect_all,
+    collect_btc_blockchain_info,
+    collect_btc_blockchair,
+    collect_btc_coinmetrics_pricing,
+    collect_eth_blockchair,
+)
 
 
 BLOCKCHAIN_INFO_RESPONSE = {
@@ -30,10 +36,17 @@ BLOCKCHAIR_ETH_RESPONSE = {
     }
 }
 
-# Glassnode returns a list of {t, v} objects – we only care about the last one.
-GLASSNODE_REALIZED_PRICE_RESPONSE = [{"t": 1700000000, "v": 30000.0}]
-GLASSNODE_BALANCED_PRICE_RESPONSE = [{"t": 1700000000, "v": 18000.0}]
-GLASSNODE_DELTA_PRICE_RESPONSE = [{"t": 1700000000, "v": 11500.0}]
+COINMETRICS_RESPONSE = {
+    "data": [
+        {
+            "asset": "btc",
+            "time": "2026-04-02T00:00:00.000000000Z",
+            "CapMrktCurUSD": "1338870647177.839",
+            "CapMVRVCur": "1.236157058152968281",
+            "SplyCur": "20010500.0",
+        }
+    ]
+}
 
 
 @pytest.mark.asyncio
@@ -66,6 +79,40 @@ async def test_collect_eth_blockchair():
 
 
 @pytest.mark.asyncio
+async def test_collect_btc_coinmetrics_pricing_derives_values():
+    with patch("collector._get_json", new=AsyncMock(return_value=COINMETRICS_RESPONSE)), \
+         patch("collector.get_average_metric", new=AsyncMock(return_value=1_100_000_000_000.0)):
+        metrics = await collect_btc_coinmetrics_pricing()
+
+    market_cap = 1338870647177.839
+    mvrv = 1.236157058152968281
+    supply = 20010500.0
+    realized_cap = market_cap / mvrv
+    realized_price = realized_cap / supply
+    average_cap = 1_100_000_000_000.0
+    delta = (realized_cap - average_cap) / supply
+
+    assert metrics["BTC.MARKET_CAP"] == pytest.approx(market_cap)
+    assert metrics["BTC.MVRV"] == pytest.approx(mvrv)
+    assert metrics["BTC.CIRCULATING_SUPPLY"] == pytest.approx(supply)
+    assert metrics["BTC.REALIZED_CAP"] == pytest.approx(realized_cap)
+    assert metrics["BTC.AVERAGE_CAP"] == pytest.approx(average_cap)
+    assert metrics["BTC.REALIZED_PRICE"] == pytest.approx(realized_price)
+    assert metrics["BTC.DELTA_PRICE"] == pytest.approx(delta)
+    assert metrics["BTC.BALANCED_PRICE_EST"] == pytest.approx(delta)
+    assert metrics["BTC.TRANSFERRED_PRICE_EST"] == pytest.approx(realized_price - delta)
+
+
+@pytest.mark.asyncio
+async def test_collect_btc_coinmetrics_pricing_uses_market_cap_as_fallback_average():
+    with patch("collector._get_json", new=AsyncMock(return_value=COINMETRICS_RESPONSE)), \
+         patch("collector.get_average_metric", new=AsyncMock(return_value=None)):
+        metrics = await collect_btc_coinmetrics_pricing()
+
+    assert metrics["BTC.AVERAGE_CAP"] == pytest.approx(metrics["BTC.MARKET_CAP"])
+
+
+@pytest.mark.asyncio
 async def test_collect_all_aggregates_sources():
     async def mock_get_json(url, params=None):
         if "blockchain.info" in url:
@@ -74,121 +121,43 @@ async def test_collect_all_aggregates_sources():
             return BLOCKCHAIR_BTC_RESPONSE
         if "blockchair.com/ethereum" in url:
             return BLOCKCHAIR_ETH_RESPONSE
-        if "glassnode.com" in url:
-            if "price_realized" in url:
-                return GLASSNODE_REALIZED_PRICE_RESPONSE
-            if "balanced_price" in url:
-                return GLASSNODE_BALANCED_PRICE_RESPONSE
-            if "delta_price" in url:
-                return GLASSNODE_DELTA_PRICE_RESPONSE
+        if "coinmetrics.io" in url:
+            return COINMETRICS_RESPONSE
         return {}
 
     with patch("collector._get_json", new=mock_get_json), \
-         patch("collector.settings") as mock_settings:
-        mock_settings.glassnode_api_key = "test-key"
+         patch("collector.get_average_metric", new=AsyncMock(return_value=1_100_000_000_000.0)):
         metrics = await collect_all()
 
     assert "BTC.ACTIVE_ADDRESSES" in metrics
     assert "BTC.FEE_MEDIAN" in metrics
     assert "ETH.GAS_PRICE" in metrics
     assert "BTC.REALIZED_PRICE" in metrics
-    assert "BTC.BALANCED_PRICE" in metrics
-    assert "BTC.TRANSFERRED_PRICE" in metrics
     assert "BTC.DELTA_PRICE" in metrics
+    assert "BTC.BALANCED_PRICE_EST" in metrics
+    assert "BTC.TRANSFERRED_PRICE_EST" in metrics
 
 
 @pytest.mark.asyncio
 async def test_collect_all_tolerates_single_source_failure():
     """collect_all should still return data from working sources."""
-    call_count = 0
 
     async def mock_get_json(url, params=None):
-        nonlocal call_count
-        call_count += 1
         if "blockchain.info" in url:
             raise RuntimeError("Simulated network error")
         if "blockchair.com/bitcoin" in url:
             return BLOCKCHAIR_BTC_RESPONSE
         if "blockchair.com/ethereum" in url:
             return BLOCKCHAIR_ETH_RESPONSE
-        if "glassnode.com" in url:
-            if "price_realized" in url:
-                return GLASSNODE_REALIZED_PRICE_RESPONSE
-            if "balanced_price" in url:
-                return GLASSNODE_BALANCED_PRICE_RESPONSE
-            if "delta_price" in url:
-                return GLASSNODE_DELTA_PRICE_RESPONSE
+        if "coinmetrics.io" in url:
+            return COINMETRICS_RESPONSE
         return {}
 
     with patch("collector._get_json", new=mock_get_json), \
-         patch("collector.settings") as mock_settings:
-        mock_settings.glassnode_api_key = "test-key"
+         patch("collector.get_average_metric", new=AsyncMock(return_value=1_100_000_000_000.0)):
         metrics = await collect_all()
 
-    # blockchain.info failed, but Blockchair and Glassnode still succeeded
+    # blockchain.info failed, but other sources still succeeded
     assert "BTC.FEE_MEDIAN" in metrics
     assert "ETH.GAS_PRICE" in metrics
     assert "BTC.REALIZED_PRICE" in metrics
-
-
-# ---------------------------------------------------------------------------
-# Glassnode collector tests
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_collect_btc_glassnode():
-    """All four pricing metrics should be returned when Glassnode succeeds."""
-    async def mock_get_json(url, params=None):
-        if "price_realized" in url:
-            return GLASSNODE_REALIZED_PRICE_RESPONSE
-        if "balanced_price" in url:
-            return GLASSNODE_BALANCED_PRICE_RESPONSE
-        if "delta_price" in url:
-            return GLASSNODE_DELTA_PRICE_RESPONSE
-        return []
-
-    with patch("collector._get_json", new=mock_get_json), \
-         patch("collector.settings") as mock_settings:
-        mock_settings.glassnode_api_key = "test-key"
-        metrics = await collect_btc_glassnode()
-
-    assert metrics["BTC.REALIZED_PRICE"] == 30000.0
-    assert metrics["BTC.BALANCED_PRICE"] == 18000.0
-    # Transferred = Realized − Balanced
-    assert metrics["BTC.TRANSFERRED_PRICE"] == pytest.approx(12000.0)
-    assert metrics["BTC.DELTA_PRICE"] == 11500.0
-
-
-@pytest.mark.asyncio
-async def test_collect_btc_glassnode_skips_without_api_key():
-    """Should return empty dict when no Glassnode API key is set."""
-    with patch("collector.settings") as mock_settings:
-        mock_settings.glassnode_api_key = ""
-        metrics = await collect_btc_glassnode()
-
-    assert metrics == {}
-
-
-@pytest.mark.asyncio
-async def test_collect_btc_glassnode_partial_failure():
-    """Should still return available metrics when some endpoints fail."""
-    async def mock_get_json(url, params=None):
-        if "price_realized" in url:
-            return GLASSNODE_REALIZED_PRICE_RESPONSE
-        if "balanced_price" in url:
-            raise RuntimeError("Tier too low")
-        if "delta_price" in url:
-            return GLASSNODE_DELTA_PRICE_RESPONSE
-        return []
-
-    with patch("collector._get_json", new=mock_get_json), \
-         patch("collector.settings") as mock_settings:
-        mock_settings.glassnode_api_key = "test-key"
-        metrics = await collect_btc_glassnode()
-
-    assert metrics["BTC.REALIZED_PRICE"] == 30000.0
-    assert "BTC.BALANCED_PRICE" not in metrics
-    # Transferred cannot be derived without Balanced
-    assert "BTC.TRANSFERRED_PRICE" not in metrics
-    assert metrics["BTC.DELTA_PRICE"] == 11500.0

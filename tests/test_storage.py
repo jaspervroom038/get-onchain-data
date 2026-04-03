@@ -3,7 +3,7 @@
 import pytest
 import pytest_asyncio
 
-from storage import get_history, init_db, list_symbols, save_metric
+from storage import get_average_metric, get_history, init_db, list_symbols, save_metric
 
 
 @pytest.fixture
@@ -69,3 +69,21 @@ async def test_get_history_ordered_by_timestamp(tmp_db):
     rows = await get_history("BTC.ACTIVE_ADDRESSES", 0, 400, db_path=tmp_db)
     timestamps = [r["timestamp"] for r in rows]
     assert timestamps == sorted(timestamps)
+
+
+@pytest.mark.asyncio
+async def test_get_average_metric(tmp_db):
+    await init_db(db_path=tmp_db)
+    await save_metric("BTC.MARKET_CAP", 100.0, timestamp=1, db_path=tmp_db)
+    await save_metric("BTC.MARKET_CAP", 200.0, timestamp=2, db_path=tmp_db)
+    await save_metric("BTC.MARKET_CAP", 400.0, timestamp=3, db_path=tmp_db)
+
+    average = await get_average_metric("BTC.MARKET_CAP", db_path=tmp_db)
+    assert average == pytest.approx((100.0 + 200.0 + 400.0) / 3)
+
+
+@pytest.mark.asyncio
+async def test_get_average_metric_unknown_symbol(tmp_db):
+    await init_db(db_path=tmp_db)
+    average = await get_average_metric("UNKNOWN.SYMBOL", db_path=tmp_db)
+    assert average is None
