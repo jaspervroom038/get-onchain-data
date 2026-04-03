@@ -5,6 +5,7 @@ import logging
 import time
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from collector import collect_all
@@ -37,6 +38,18 @@ async def run_collection() -> None:
     await sync_sheets_latest(ts, metrics)
 
 
+async def run_daily_catchup() -> None:
+    """Run incremental catch-up to fill any missing days."""
+    from backfill import run_incremental
+
+    logger.info("Running daily incremental catch-up …")
+    try:
+        n = await run_incremental()
+        logger.info("Daily catch-up finished: %s new data points", n)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Daily catch-up failed: %s", exc)
+
+
 def create_scheduler() -> AsyncIOScheduler:
     """Build and configure the APScheduler instance."""
     scheduler = AsyncIOScheduler()
@@ -48,15 +61,25 @@ def create_scheduler() -> AsyncIOScheduler:
         replace_existing=True,
         max_instances=1,
     )
+    scheduler.add_job(
+        run_daily_catchup,
+        trigger=CronTrigger(hour=1, minute=0),
+        id="daily_catchup",
+        name="Daily incremental catch-up",
+        replace_existing=True,
+        max_instances=1,
+    )
     return scheduler
 
 
 async def start_scheduler_and_collect(scheduler: AsyncIOScheduler) -> None:
-    """Start the scheduler and immediately perform the first collection."""
+    """Start the scheduler, run incremental catch-up, then first collection."""
     scheduler.start()
     logger.info(
         "Scheduler started (interval=%ds)", settings.collect_interval_seconds
     )
+    # Fill any gaps since the last run before starting regular collection.
+    await run_daily_catchup()
     # Run an initial collection right away so data is available immediately.
     await run_collection()
 

@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
   <style>
     :root {
       --bg: #04110d;
@@ -102,7 +104,8 @@
     /* ── Main Chart ── */
     .main-chart-header { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem; }
     .legend { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-left: auto; }
-    .legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; color: var(--ink); }
+    .legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; color: var(--ink); cursor: pointer; transition: opacity 0.2s; user-select: none; }
+    .legend-item.inactive { opacity: 0.3; }
     .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
     .chart-container { position: relative; width: 100%; height: 360px; }
 
@@ -152,13 +155,48 @@
     .card-chart {
       border: 1px solid var(--line); border-radius: 8px;
       padding: 0.25rem; background: rgba(7,22,16,0.9); min-height: 130px;
+      cursor: pointer; transition: border-color 0.2s;
     }
+    .card-chart:hover { border-color: var(--accent-soft); }
     .empty { color: var(--warn); font-size: 0.8rem; }
     details { border-top: 1px dashed var(--line); padding-top: 0.4rem; }
     summary { cursor: pointer; color: #9ee4c2; font-weight: 600; font-size: 0.78rem; }
     table { width: 100%; margin-top: 0.3rem; border-collapse: collapse; font-size: 0.74rem; }
     td, th { border-bottom: 1px solid var(--line); padding: 0.22rem 0.3rem; text-align: left; }
     .status { margin-top: 0.5rem; color: var(--muted); font-size: 0.78rem; }
+
+    /* ── Reset Zoom ── */
+    .reset-zoom-btn {
+      font-size: 0.68rem; padding: 0.2rem 0.55rem;
+      border-radius: 999px; border: 1px solid var(--accent-soft);
+      background: transparent; color: var(--accent); cursor: pointer;
+      display: none; font-weight: 500;
+    }
+    .reset-zoom-btn.visible { display: inline-block; }
+    .reset-zoom-btn:hover { background: rgba(85,255,179,0.12); }
+
+    /* ── Expand Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(4,17,13,0.92); backdrop-filter: blur(8px);
+      display: none; align-items: center; justify-content: center; padding: 1.5rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-inner {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 14px; padding: 1rem; width: 100%; max-width: 1000px;
+      max-height: 90vh; display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-family: "Share Tech Mono", monospace; color: var(--accent); font-size: 0.9rem; text-transform: uppercase; }
+    .modal-close {
+      background: none; border: 1px solid var(--line); color: var(--muted);
+      cursor: pointer; font-size: 1.1rem; padding: 0.2rem 0.55rem; border-radius: 6px;
+    }
+    .modal-close:hover { color: var(--ink); border-color: var(--accent-soft); }
+    .modal-chart { position: relative; width: 100%; height: 500px; }
+    .modal-hint { color: var(--muted); font-size: 0.68rem; text-align: center; }
+
     @media (max-width: 640px) {
       .page { padding: 0.5rem; }
       h1 { font-size: 0.95rem; }
@@ -167,6 +205,7 @@
       .chart-container { height: 220px; }
       .controls { width: 100%; }
       input { min-width: 100%; }
+      .modal-chart { height: 300px; }
     }
   </style>
 </head>
@@ -184,6 +223,7 @@
           <option value="90">90</option>
           <option value="180">180</option>
           <option value="365">365</option>
+          <option value="0">All</option>
         </select>
         <select id="resolution" title="Resolution">
           <option value="1D" selected>Day</option>
@@ -196,6 +236,11 @@
           <option value="pricing">Pricing</option>
           <option value="bottom">Bottom Signals</option>
           <option value="network">Network</option>
+        </select>
+        <select id="chain" title="Chain filter">
+          <option value="all" selected>All Chains</option>
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
         </select>
         <input id="search" placeholder="Filter symbols…" />
         <button id="refresh">Refresh</button>
@@ -214,10 +259,11 @@
     <div class="main-chart-header">
       <span class="section-title">BTC Price · Realized · Balanced</span>
       <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#5dffba"></div>Price</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#3dd6b5"></div>Realized</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#ffc16b"></div>Balanced (EST)</div>
+        <div class="legend-item" data-ds="0"><div class="legend-dot" style="background:#5dffba"></div>Price</div>
+        <div class="legend-item" data-ds="1"><div class="legend-dot" style="background:#3dd6b5"></div>Realized</div>
+        <div class="legend-item" data-ds="2"><div class="legend-dot" style="background:#ffc16b"></div>Balanced (EST)</div>
       </div>
+      <button class="reset-zoom-btn" id="resetZoom" title="Reset zoom">Reset Zoom</button>
     </div>
     <div class="chart-container"><canvas id="mainChart"></canvas></div>
   </section>
@@ -242,6 +288,18 @@
   </section>
 </main>
 
+<!-- ── Expand Modal ── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Symbol</span>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-chart"><canvas id="modalCanvas"></canvas></div>
+    <div class="modal-hint">Scroll to zoom · Drag to pan</div>
+  </div>
+</div>
+
 <script>
 (function() {
   "use strict";
@@ -261,6 +319,13 @@
   var cardsTitleEl = document.getElementById("cardsTitle");
   var mainCanvas = document.getElementById("mainChart");
   var mainChartInstance = null;
+  var chainEl    = document.getElementById("chain");
+  var resetZoomEl = document.getElementById("resetZoom");
+  var modalEl    = document.getElementById("modal");
+  var modalTitleEl = document.getElementById("modalTitle");
+  var modalCloseEl = document.getElementById("modalClose");
+  var modalCanvas = document.getElementById("modalCanvas");
+  var modalChartInstance = null;
 
   // ── Resolution → seconds ──
   var RES_SEC = { "1D": 86400, "1W": 604800, "1M": 2592000, "1Y": 31536000 };
@@ -341,6 +406,46 @@
     return "/metrics/"+encodeURIComponent(sym)+"/history?from="+from+"&to="+to+"&resolution="+res;
   }
 
+  // ── URL state persistence ──
+  function writeHashState() {
+    var p = new URLSearchParams();
+    p.set("p", periodsEl.value);
+    p.set("r", resEl.value);
+    if (catEl.value !== "all") p.set("c", catEl.value);
+    if (chainEl.value !== "all") p.set("ch", chainEl.value);
+    if (searchEl.value.trim()) p.set("q", searchEl.value.trim());
+    history.replaceState(null, "", "#" + p.toString());
+  }
+  function readHashState() {
+    var p = new URLSearchParams(window.location.hash.slice(1));
+    if (p.has("p")) periodsEl.value = p.get("p");
+    if (p.has("r")) resEl.value = p.get("r");
+    if (p.has("c")) catEl.value = p.get("c");
+    if (p.has("ch")) chainEl.value = p.get("ch");
+    if (p.has("q")) searchEl.value = p.get("q");
+  }
+
+  // ── Crosshair plugin (vertical hover line) ──
+  var crosshairPlugin = {
+    id: "crosshair",
+    afterDraw: function(chart) {
+      if (chart.tooltip && chart.tooltip._active && chart.tooltip._active.length) {
+        var x = chart.tooltip._active[0].element.x;
+        var yAxis = chart.scales.y;
+        var ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x, yAxis.top);
+        ctx.lineTo(x, yAxis.bottom);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(85,255,179,0.3)";
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  };
+
   // ── Charts ──
   var cardCharts = [];
 
@@ -357,7 +462,14 @@
     var ch = new Chart(canvas,{
       type:"line",
       data:{labels:labels,datasets:[{data:values,borderColor:color,borderWidth:1.5,fill:true,backgroundColor:color+"18",pointRadius:0,tension:0.2}]},
-      options:{responsive:true,maintainAspectRatio:false,animation:{duration:200},plugins:{legend:{display:false}},scales:{x:{display:false},y:{ticks:{maxTicksLimit:3,font:{size:10}},grid:{color:"#1a3d2e"}}}}
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:200},
+        plugins:{legend:{display:false},tooltip:{
+          backgroundColor:"rgba(4,17,13,0.92)",borderColor:"#245540",borderWidth:1,
+          titleColor:"#55ffb3",bodyColor:"#dff9ed",titleFont:{size:10},bodyFont:{size:10},
+          padding:6,displayColors:false,
+          callbacks:{label:function(ctx){return fmtNum(ctx.parsed.y);}}
+        }},
+        scales:{x:{display:false},y:{ticks:{maxTicksLimit:3,font:{size:10}},grid:{color:"#1a3d2e"}}}}
     });
     cardCharts.push(ch);
   }
@@ -382,18 +494,42 @@
         {label:"Realized",data:sortedTs.map(function(t){return rm.get(t)||null;}),borderColor:"#3dd6b5",borderWidth:2,fill:false,pointRadius:0,tension:0.2,spanGaps:true},
         {label:"Balanced (EST)",data:sortedTs.map(function(t){return bm.get(t)||null;}),borderColor:"#ffc16b",borderWidth:2,fill:false,pointRadius:0,tension:0.2,spanGaps:true},
       ]},
+      plugins:[crosshairPlugin],
       options:{
         responsive:true,maintainAspectRatio:false,animation:{duration:300},
         interaction:{mode:"index",intersect:false},
-        plugins:{legend:{display:false},tooltip:{
-          backgroundColor:"rgba(4,17,13,0.92)",borderColor:"#245540",borderWidth:1,
-          titleColor:"#55ffb3",bodyColor:"#dff9ed",
-          callbacks:{label:function(ctx){return " "+ctx.dataset.label+": $"+fmtNum(ctx.parsed.y);}}
-        }},
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:"rgba(4,17,13,0.92)",borderColor:"#245540",borderWidth:1,
+            titleColor:"#55ffb3",bodyColor:"#dff9ed",
+            callbacks:{label:function(ctx){return " "+ctx.dataset.label+": $"+fmtNum(ctx.parsed.y);}}
+          },
+          zoom:{
+            pan:{enabled:false},
+            zoom:{
+              drag:{enabled:true,backgroundColor:"rgba(85,255,179,0.08)",borderColor:"rgba(85,255,179,0.3)",borderWidth:1},
+              wheel:{enabled:true,speed:0.05},
+              pinch:{enabled:true},
+              mode:"x",
+              onZoomComplete:function(){resetZoomEl.classList.add("visible");}
+            }
+          }
+        },
         scales:{
           x:{ticks:{color:"#8db8a6",maxTicksLimit:10,maxRotation:0,font:{size:10}},grid:{color:"#1a3d2e"}},
           y:{type:"logarithmic",ticks:{color:"#8db8a6",maxTicksLimit:6,callback:function(v){return "$"+fmtNum(v);},font:{size:10}},grid:{color:"#1a3d2e"}}
         }
+      }
+    });
+    resetZoomEl.classList.remove("visible");
+    // Restore legend toggle state
+    document.querySelectorAll(".legend-item[data-ds]").forEach(function(el){
+      if(el.classList.contains("inactive")){
+        var idx=Number(el.getAttribute("data-ds"));
+        var meta=mainChartInstance.getDatasetMeta(idx);
+        meta.hidden=true;
+        mainChartInstance.update("none");
       }
     });
   }
@@ -421,8 +557,55 @@
 
     if (rows.length) {
       drawCardChart(card.querySelector("canvas"), rows, sym);
+      (function(s, r) {
+        card.querySelector(".card-chart").addEventListener("click", function(){ openModal(s, r); });
+      })(sym, rows);
     }
     return card;
+  }
+
+  // ── Modal (expand card chart) ──
+  function openModal(sym, points) {
+    if (modalChartInstance) { modalChartInstance.destroy(); modalChartInstance = null; }
+    modalTitleEl.textContent = sym;
+    var res = resEl.value;
+    var labels = points.map(function(p){ return tsLabel(p.timestamp, res); });
+    var values = points.map(function(p){ return Number(p.value); });
+    var color = BOTTOM_SYMBOLS.has(sym) ? "#c084fc" : sym.includes("EST") ? "#ffc16b" : "#5dffba";
+    modalChartInstance = new Chart(modalCanvas,{
+      type:"line",
+      data:{labels:labels,datasets:[{label:sym,data:values,borderColor:color,borderWidth:2,fill:true,backgroundColor:color+"18",pointRadius:0,tension:0.2}]},
+      plugins:[crosshairPlugin],
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:{duration:300},
+        interaction:{mode:"index",intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:"rgba(4,17,13,0.92)",borderColor:"#245540",borderWidth:1,
+            titleColor:"#55ffb3",bodyColor:"#dff9ed",
+            callbacks:{label:function(ctx){return " "+sym+": "+fmtNum(ctx.parsed.y);}}
+          },
+          zoom:{
+            pan:{enabled:true,mode:"x"},
+            zoom:{
+              wheel:{enabled:true,speed:0.05},
+              pinch:{enabled:true},
+              mode:"x"
+            }
+          }
+        },
+        scales:{
+          x:{ticks:{color:"#8db8a6",maxTicksLimit:14,maxRotation:0,font:{size:11}},grid:{color:"#1a3d2e"}},
+          y:{ticks:{color:"#8db8a6",maxTicksLimit:8,font:{size:11}},grid:{color:"#1a3d2e"}}
+        }
+      }
+    });
+    modalEl.classList.add("open");
+  }
+  function closeModal() {
+    modalEl.classList.remove("open");
+    if (modalChartInstance) { modalChartInstance.destroy(); modalChartInstance = null; }
   }
 
   // ── Main loader ──
@@ -430,11 +613,13 @@
     var periods = Number(periodsEl.value);
     var res = resEl.value;
     var cat = catEl.value;
+    var chain = chainEl.value;
     var query = searchEl.value.trim().toUpperCase();
     var bucket = RES_SEC[res] || 86400;
     var now = Math.floor(Date.now()/1000);
-    var fromTs = now - (periods * bucket);
+    var fromTs = periods > 0 ? now - (periods * bucket) : 0;
 
+    writeHashState();
     statusEl.textContent = "Loading…";
     destroyCardCharts();
     cardsEl.innerHTML = "";
@@ -443,9 +628,9 @@
     var emptyHist = {data:[]};
     var [symbolsResp, priceH, realizedH, balancedH] = await Promise.all([
       getJson("/metrics"),
-      getJson(histUrl("BTC.PRICE_USD", 0, now, res)).catch(function(){return emptyHist;}),
-      getJson(histUrl("BTC.REALIZED_PRICE", 0, now, res)).catch(function(){return emptyHist;}),
-      getJson(histUrl("BTC.BALANCED_PRICE_EST", 0, now, res)).catch(function(){return emptyHist;}),
+      getJson(histUrl("BTC.PRICE_USD", fromTs, now, res)).catch(function(){return emptyHist;}),
+      getJson(histUrl("BTC.REALIZED_PRICE", fromTs, now, res)).catch(function(){return emptyHist;}),
+      getJson(histUrl("BTC.BALANCED_PRICE_EST", fromTs, now, res)).catch(function(){return emptyHist;}),
     ]);
 
     drawMainChart(priceH.data||[], realizedH.data||[], balancedH.data||[]);
@@ -465,10 +650,13 @@
       return a.localeCompare(b);
     });
 
-    // Filter by category
+    // Filter by category and chain
     var symbols = allSymbols;
     if (cat !== "all") {
       symbols = symbols.filter(function(s){ return symbolCategory(s) === cat; });
+    }
+    if (chain !== "all") {
+      symbols = symbols.filter(function(s){ return s.startsWith(chain + "."); });
     }
     if (query) {
       symbols = symbols.filter(function(s){ return s.includes(query); });
@@ -499,7 +687,8 @@
       }
     }
 
-    statusEl.textContent = symbols.length+" symbols · "+periods+" × "+res.replace("1","")+" · "+shortTime();
+    var periodLabel = periods > 0 ? periods+" × "+res.replace("1","") : "All Time · "+res.replace("1","");
+    statusEl.textContent = symbols.length+" symbols · "+periodLabel+" · "+shortTime();
   }
 
   async function boot() {
@@ -511,11 +700,35 @@
   periodsEl.addEventListener("change", boot);
   resEl.addEventListener("change", boot);
   catEl.addEventListener("change", boot);
+  chainEl.addEventListener("change", boot);
   searchEl.addEventListener("input", function(){
     clearTimeout(window.__st);
     window.__st = setTimeout(boot, 150);
   });
 
+  // Reset zoom
+  resetZoomEl.addEventListener("click", function(){
+    if (mainChartInstance) { mainChartInstance.resetZoom(); resetZoomEl.classList.remove("visible"); }
+  });
+
+  // Clickable legend → toggle datasets
+  document.querySelectorAll(".legend-item[data-ds]").forEach(function(el){
+    el.addEventListener("click", function(){
+      if (!mainChartInstance) return;
+      var idx = Number(el.getAttribute("data-ds"));
+      var meta = mainChartInstance.getDatasetMeta(idx);
+      meta.hidden = !meta.hidden;
+      el.classList.toggle("inactive", meta.hidden);
+      mainChartInstance.update();
+    });
+  });
+
+  // Modal
+  modalCloseEl.addEventListener("click", closeModal);
+  modalEl.addEventListener("click", function(e){ if(e.target===modalEl) closeModal(); });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape"&&modalEl.classList.contains("open")) closeModal(); });
+
+  readHashState();
   boot();
 })();
 </script>
