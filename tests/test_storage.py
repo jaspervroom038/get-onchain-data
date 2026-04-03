@@ -3,7 +3,7 @@
 import pytest
 import pytest_asyncio
 
-from storage import get_average_metric, get_history, init_db, list_symbols, save_metric
+from storage import get_average_metric, get_daily_sma, get_history, init_db, list_symbols, save_metric
 
 
 @pytest.fixture
@@ -87,3 +87,27 @@ async def test_get_average_metric_unknown_symbol(tmp_db):
     await init_db(db_path=tmp_db)
     average = await get_average_metric("UNKNOWN.SYMBOL", db_path=tmp_db)
     assert average is None
+
+
+@pytest.mark.asyncio
+async def test_get_daily_sma(tmp_db):
+    """SMA of daily close values over the last N days."""
+    await init_db(db_path=tmp_db)
+    # Insert 5 days of data, 1 point per day (86400s apart)
+    base_ts = 1_700_000_000
+    for i in range(5):
+        await save_metric("BTC.PRICE_USD", float((i + 1) * 100), timestamp=base_ts + i * 86400, db_path=tmp_db)
+
+    # SMA of last 3 days: values 300, 400, 500 → avg = 400
+    sma = await get_daily_sma("BTC.PRICE_USD", 3, to_ts=base_ts + 5 * 86400, db_path=tmp_db)
+    assert sma == pytest.approx(400.0)
+
+
+@pytest.mark.asyncio
+async def test_get_daily_sma_insufficient_data(tmp_db):
+    """Returns None when fewer than requested days are available."""
+    await init_db(db_path=tmp_db)
+    await save_metric("BTC.PRICE_USD", 100.0, timestamp=1_700_000_000, db_path=tmp_db)
+
+    sma = await get_daily_sma("BTC.PRICE_USD", 5, to_ts=1_700_100_000, db_path=tmp_db)
+    assert sma is None

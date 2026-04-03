@@ -21,515 +21,501 @@
       --line: #245540;
       --warn: #ffc16b;
       --danger: #ff8f7d;
+      --green: #4ade80;
+      --yellow: #fbbf24;
+      --red: #f87171;
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; }
     body {
-      margin: 0;
       font-family: "Space Grotesk", sans-serif;
       color: var(--ink);
       background-color: var(--bg);
       background-image:
-        linear-gradient(rgba(86, 255, 178, 0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(86, 255, 178, 0.06) 1px, transparent 1px),
-        radial-gradient(circle at 8% -10%, rgba(60, 255, 165, 0.25), transparent 35%),
-        radial-gradient(circle at 105% 10%, rgba(50, 184, 124, 0.18), transparent 30%);
-      background-size: 24px 24px, 24px 24px, auto, auto;
+        linear-gradient(rgba(86,255,178,0.05)1px,transparent 1px),
+        linear-gradient(90deg,rgba(86,255,178,0.05)1px,transparent 1px),
+        radial-gradient(circle at 8% -10%,rgba(60,255,165,0.2),transparent 35%),
+        radial-gradient(circle at 105% 10%,rgba(50,184,124,0.15),transparent 30%);
+      background-size: 24px 24px,24px 24px,auto,auto;
       min-height: 100vh;
     }
-    .page { max-width: 1320px; margin: 0 auto; padding: 1rem 1rem 1.4rem; }
+    .page { max-width: 1360px; margin: 0 auto; padding: 0.75rem 1rem 1.2rem; }
+
+    /* ── Sticky Header ── */
     .hero {
-      background: linear-gradient(160deg, rgba(13, 36, 27, 0.92), rgba(10, 29, 22, 0.92));
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 1rem 1rem 0.9rem;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.38);
-    }
-    h1 {
-      margin: 0;
-      font-size: 1.4rem;
-      letter-spacing: 0.03em;
-      font-family: "Share Tech Mono", monospace;
-      text-transform: uppercase;
-      color: var(--accent);
-      text-shadow: 0 0 14px rgba(85, 255, 179, 0.35);
-    }
-    .subtitle { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.9rem; }
-    .controls { margin-top: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
-    .summary {
-      margin-top: 0.8rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 0.55rem;
-    }
-    .tile { border: 1px solid var(--line); border-radius: 12px; padding: 0.55rem 0.65rem; background: rgba(18, 42, 32, 0.75); }
-    .tile-label { color: var(--muted); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; }
-    .tile-value { margin-top: 0.18rem; font-size: 1.05rem; font-family: "Share Tech Mono", monospace; color: var(--accent); }
-    .chip, select, button, input {
-      font: inherit;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      padding: 0.45rem 0.85rem;
-      background: rgba(10, 31, 23, 0.94);
-      color: var(--ink);
-    }
-    input { min-width: 230px; }
-    input::placeholder { color: #6f9a8a; }
-    button {
-      border-color: var(--accent-soft);
-      background: linear-gradient(120deg, #2fb07a, #58db98);
-      color: #042415;
-      cursor: pointer;
-      font-weight: 700;
-    }
-    /* Main combined chart */
-    .main-chart-section {
-      margin-top: 0.75rem;
-      background: linear-gradient(160deg, rgba(13, 36, 27, 0.95), rgba(10, 29, 22, 0.95));
+      position: sticky; top: 0; z-index: 50;
+      background: linear-gradient(160deg,rgba(13,36,27,0.97),rgba(10,29,22,0.97));
       border: 1px solid var(--line);
       border-radius: 14px;
-      padding: 1rem;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+      padding: 0.7rem 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      backdrop-filter: blur(12px);
     }
-    .main-chart-header { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.75rem; }
-    .main-chart-title {
+    .hero-top { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+    h1 {
+      font-size: 1.15rem; letter-spacing: 0.04em;
       font-family: "Share Tech Mono", monospace;
-      font-size: 0.9rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--accent);
-      flex: 1;
+      text-transform: uppercase; color: var(--accent);
+      text-shadow: 0 0 12px rgba(85,255,179,0.3);
+      white-space: nowrap;
     }
-    .legend { display: flex; flex-wrap: wrap; gap: 0.9rem; }
-    .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--ink); }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .main-chart-wrap { position: relative; width: 100%; height: 380px; }
-    /* Metric cards */
-    .grid { margin-top: 1.05rem; display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin-left: auto; }
+    .summary {
+      display: flex; gap: 0.7rem; margin-top: 0.5rem; flex-wrap: wrap;
+    }
+    .tile {
+      border: 1px solid var(--line); border-radius: 10px;
+      padding: 0.35rem 0.6rem; background: rgba(18,42,32,0.6);
+      display: flex; gap: 0.4rem; align-items: baseline;
+    }
+    .tile-label { color: var(--muted); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .tile-value { font-size: 0.9rem; font-family: "Share Tech Mono", monospace; color: var(--accent); }
+    select, button, input {
+      font: inherit; font-size: 0.82rem;
+      border-radius: 999px; border: 1px solid var(--line);
+      padding: 0.35rem 0.7rem;
+      background: rgba(10,31,23,0.94); color: var(--ink);
+    }
+    input { min-width: 170px; }
+    input::placeholder { color: #5f8a7a; }
+    button {
+      border-color: var(--accent-soft);
+      background: linear-gradient(120deg,#2fb07a,#58db98);
+      color: #042415; cursor: pointer; font-weight: 700;
+    }
+    button:active { transform: scale(0.97); }
+
+    /* ── Sections ── */
+    .section {
+      margin-top: 0.7rem;
+      background: linear-gradient(160deg,rgba(13,36,27,0.95),rgba(10,29,22,0.95));
+      border: 1px solid var(--line); border-radius: 14px;
+      padding: 0.8rem 1rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.28);
+    }
+    .section-title {
+      font-family: "Share Tech Mono", monospace;
+      font-size: 0.82rem; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+
+    /* ── Main Chart ── */
+    .main-chart-header { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem; }
+    .legend { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-left: auto; }
+    .legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; color: var(--ink); }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .chart-container { position: relative; width: 100%; height: 360px; }
+
+    /* ── Bottom Signals ── */
+    .signals-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 0.5rem; }
+    .signal-tile {
+      border: 1px solid var(--line); border-radius: 10px;
+      padding: 0.5rem 0.6rem; background: rgba(12,31,24,0.7);
+      display: flex; flex-direction: column; gap: 0.2rem;
+      transition: border-color 0.2s;
+    }
+    .signal-tile[data-level="green"] { border-color: var(--green); }
+    .signal-tile[data-level="yellow"] { border-color: var(--yellow); }
+    .signal-tile[data-level="red"] { border-color: var(--red); }
+    .signal-name { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .signal-row { display: flex; align-items: center; gap: 0.4rem; }
+    .signal-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .signal-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .signal-dot.yellow { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+    .signal-dot.red { background: var(--red); box-shadow: 0 0 6px var(--red); }
+    .signal-val { font-size: 1rem; font-family: "Share Tech Mono", monospace; color: var(--ink); }
+    .signal-hint { font-size: 0.62rem; color: var(--muted); }
+
+    /* ── Cards Grid ── */
+    .grid { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill,minmax(300px,1fr)); }
     .card {
-      background: linear-gradient(180deg, rgba(15, 39, 29, 0.95), rgba(12, 31, 24, 0.95));
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 0.75rem;
-      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
-      display: flex;
-      flex-direction: column;
-      gap: 0.45rem;
-      animation: rise 300ms ease-out;
-      position: relative;
-      overflow: hidden;
+      background: linear-gradient(180deg,rgba(15,39,29,0.95),rgba(12,31,24,0.95));
+      border: 1px solid var(--line); border-radius: 10px;
+      padding: 0.6rem; display: flex; flex-direction: column; gap: 0.3rem;
+      animation: rise 250ms ease-out; position: relative; overflow: hidden;
     }
     .card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: linear-gradient(120deg, transparent, rgba(88, 224, 160, 0.06), transparent);
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(120deg,transparent,rgba(88,224,160,0.04),transparent);
     }
-    @keyframes rise {
-      from { transform: translateY(8px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
+    @keyframes rise { from { transform: translateY(6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .symbol {
-      font-size: 0.74rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
+      font-size: 0.7rem; color: var(--muted); letter-spacing: 0.06em;
       font-family: "Share Tech Mono", monospace;
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
+      display: flex; align-items: center; gap: 0.35rem;
     }
-    .tag { border: 1px solid #466f5d; padding: 0.08rem 0.36rem; border-radius: 999px; font-size: 0.65rem; letter-spacing: 0.06em; color: #bfe9d4; }
+    .tag { border: 1px solid #466f5d; padding: 0.05rem 0.3rem; border-radius: 999px; font-size: 0.6rem; color: #bfe9d4; }
     .tag.est { border-color: #87673a; color: #ffd597; }
-    .value { font-size: 1.24rem; font-weight: 700; color: var(--accent); font-family: "Share Tech Mono", monospace; word-break: break-word; }
-    .meta { color: var(--muted); font-size: 0.78rem; }
-    .chart-wrap {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 0.35rem;
-      background: linear-gradient(180deg, rgba(7, 22, 16, 0.92), rgba(9, 28, 20, 0.92));
-      min-height: 160px;
+    .tag.bottom { border-color: #8b5cf6; color: #c4b5fd; }
+    .value { font-size: 1.1rem; font-weight: 700; color: var(--accent); font-family: "Share Tech Mono", monospace; }
+    .meta { color: var(--muted); font-size: 0.72rem; }
+    .card-chart {
+      border: 1px solid var(--line); border-radius: 8px;
+      padding: 0.25rem; background: rgba(7,22,16,0.9); min-height: 130px;
     }
-    .empty { color: var(--warn); font-size: 0.86rem; margin: 0.2rem 0 0; }
-    details { border-top: 1px dashed var(--line); padding-top: 0.5rem; }
-    summary { cursor: pointer; color: #9ee4c2; font-weight: 600; font-size: 0.86rem; }
-    table { width: 100%; margin-top: 0.45rem; border-collapse: collapse; font-size: 0.8rem; }
-    td, th { border-bottom: 1px solid var(--line); padding: 0.28rem; text-align: left; vertical-align: top; }
-    .status { margin-top: 0.75rem; color: var(--muted); font-size: 0.83rem; min-height: 1.2rem; }
+    .empty { color: var(--warn); font-size: 0.8rem; }
+    details { border-top: 1px dashed var(--line); padding-top: 0.4rem; }
+    summary { cursor: pointer; color: #9ee4c2; font-weight: 600; font-size: 0.78rem; }
+    table { width: 100%; margin-top: 0.3rem; border-collapse: collapse; font-size: 0.74rem; }
+    td, th { border-bottom: 1px solid var(--line); padding: 0.22rem 0.3rem; text-align: left; }
+    .status { margin-top: 0.5rem; color: var(--muted); font-size: 0.78rem; }
     @media (max-width: 640px) {
-      .page { padding: 0.75rem; }
-      h1 { font-size: 1.08rem; }
+      .page { padding: 0.5rem; }
+      h1 { font-size: 0.95rem; }
+      .hero { padding: 0.5rem 0.7rem; }
       .grid { grid-template-columns: 1fr; }
-      .value { font-size: 1rem; }
-      input { min-width: 180px; }
-      .main-chart-wrap { height: 240px; }
+      .chart-container { height: 220px; }
+      .controls { width: 100%; }
+      input { min-width: 100%; }
     }
   </style>
 </head>
 <body>
-  <main class="page">
-    <section class="hero">
-      <h1>On-Chain Metrics Dashboard // Matrix Console</h1>
-      <p class="subtitle">Real-time monitor with fast signals, clear priority, and direct insight into recent history.</p>
+<main class="page">
+  <!-- ── Sticky Header ── -->
+  <section class="hero">
+    <div class="hero-top">
+      <h1>On-Chain Metrics</h1>
       <div class="controls">
-        <span class="chip">History Range</span>
-        <select id="days">
-          <option value="7">Last 7 days</option>
-          <option value="30" selected>Last 30 days</option>
-          <option value="90">Last 90 days</option>
-          <option value="365">Last 365 days</option>
+        <select id="periods" title="Number of periods">
+          <option value="7">7</option>
+          <option value="14">14</option>
+          <option value="30" selected>30</option>
+          <option value="90">90</option>
+          <option value="180">180</option>
+          <option value="365">365</option>
         </select>
+        <select id="resolution" title="Resolution">
+          <option value="1D" selected>Day</option>
+          <option value="1W">Week</option>
+          <option value="1M">Month</option>
+          <option value="1Y">Year</option>
+        </select>
+        <select id="category" title="Category filter">
+          <option value="all" selected>All</option>
+          <option value="pricing">Pricing</option>
+          <option value="bottom">Bottom Signals</option>
+          <option value="network">Network</option>
+        </select>
+        <input id="search" placeholder="Filter symbols…" />
         <button id="refresh">Refresh</button>
-        <input id="search" placeholder="Filter by BTC, ETH, PRICE..." />
       </div>
-      <div class="summary">
-        <div class="tile">
-          <div class="tile-label">Total symbols</div>
-          <div class="tile-value" id="sum-total">-</div>
-        </div>
-        <div class="tile">
-          <div class="tile-label">BTC symbols</div>
-          <div class="tile-value" id="sum-btc">-</div>
-        </div>
-        <div class="tile">
-          <div class="tile-label">ETH symbols</div>
-          <div class="tile-value" id="sum-eth">-</div>
-        </div>
-        <div class="tile">
-          <div class="tile-label">Last refresh</div>
-          <div class="tile-value" id="sum-refresh">-</div>
-        </div>
+    </div>
+    <div class="summary">
+      <div class="tile"><span class="tile-label">Symbols</span><span class="tile-value" id="sum-total">-</span></div>
+      <div class="tile"><span class="tile-label">BTC</span><span class="tile-value" id="sum-btc">-</span></div>
+      <div class="tile"><span class="tile-label">ETH</span><span class="tile-value" id="sum-eth">-</span></div>
+      <div class="tile"><span class="tile-label">Refresh</span><span class="tile-value" id="sum-refresh">-</span></div>
+    </div>
+  </section>
+
+  <!-- ── Main BTC Chart ── -->
+  <section class="section">
+    <div class="main-chart-header">
+      <span class="section-title">BTC Price · Realized · Balanced</span>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#5dffba"></div>Price</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3dd6b5"></div>Realized</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ffc16b"></div>Balanced (EST)</div>
       </div>
-      <div class="status" id="status">Loading...</div>
-    </section>
+    </div>
+    <div class="chart-container"><canvas id="mainChart"></canvas></div>
+  </section>
 
-    <!-- Main combined BTC chart -->
-    <section class="main-chart-section">
-      <div class="main-chart-header">
-        <span class="main-chart-title">BTC Price &middot; Realized Price &middot; Balanced Price &mdash; Full history</span>
-        <div class="legend">
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#5dffba;"></div>
-            BTC Price
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#3dd6b5;"></div>
-            Realized Price
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#ffc16b;"></div>
-            Balanced Price (EST)
-          </div>
-        </div>
-      </div>
-      <div class="main-chart-wrap">
-        <canvas id="mainChart"></canvas>
-      </div>
-    </section>
+  <!-- ── Bottom Detection Signals ── -->
+  <section class="section" id="bottomSection">
+    <div class="section-title">Bottom Detection Signals</div>
+    <div class="signals-grid" id="signals">
+      <div class="signal-tile" id="sig-nupl"><div class="signal-name">NUPL</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; -0.5 capitulation</div></div>
+      <div class="signal-tile" id="sig-puell"><div class="signal-name">Puell Multiple</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 0.5 bottom zone</div></div>
+      <div class="signal-tile" id="sig-ma200"><div class="signal-name">Price / 200d MA</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 0.8 bottom zone</div></div>
+      <div class="signal-tile" id="sig-pi"><div class="signal-name">Pi Cycle</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 0.5 bottom zone</div></div>
+      <div class="signal-tile" id="sig-fg"><div class="signal-name">Fear &amp; Greed</div><div class="signal-row"><div class="signal-dot"></div><div class="signal-val">-</div></div><div class="signal-hint">&lt; 20 extreme fear</div></div>
+    </div>
+  </section>
 
-    <section class="grid" id="cards"></section>
-  </main>
+  <!-- ── Metric Cards ── -->
+  <section class="section">
+    <div class="section-title" id="cardsTitle">All Metrics</div>
+    <div class="grid" id="cards"></div>
+    <div class="status" id="status">Loading…</div>
+  </section>
+</main>
 
-  <script>
-    const cardsEl = document.getElementById("cards");
-    const statusEl = document.getElementById("status");
-    const daysEl = document.getElementById("days");
-    const searchEl = document.getElementById("search");
-    const refreshEl = document.getElementById("refresh");
-    const sumTotalEl = document.getElementById("sum-total");
-    const sumBtcEl = document.getElementById("sum-btc");
-    const sumEthEl = document.getElementById("sum-eth");
-    const sumRefreshEl = document.getElementById("sum-refresh");
-    const mainChartCanvas = document.getElementById("mainChart");
-    let mainChartInstance = null;
+<script>
+(function() {
+  "use strict";
 
-    const PRIORITY_SYMBOLS = [
-      "BTC.PRICE_USD",
-      "BTC.REALIZED_PRICE",
-      "BTC.BALANCED_PRICE_EST",
-    ];
+  // ── DOM refs ──
+  var cardsEl    = document.getElementById("cards");
+  var statusEl   = document.getElementById("status");
+  var periodsEl  = document.getElementById("periods");
+  var resEl      = document.getElementById("resolution");
+  var catEl      = document.getElementById("category");
+  var searchEl   = document.getElementById("search");
+  var refreshEl  = document.getElementById("refresh");
+  var sumTotalEl = document.getElementById("sum-total");
+  var sumBtcEl   = document.getElementById("sum-btc");
+  var sumEthEl   = document.getElementById("sum-eth");
+  var sumRefreshEl = document.getElementById("sum-refresh");
+  var cardsTitleEl = document.getElementById("cardsTitle");
+  var mainCanvas = document.getElementById("mainChart");
+  var mainChartInstance = null;
 
-    // These symbols always use full history (from=0) regardless of the range selector
-    const FULL_HISTORY_SYMBOLS = new Set([
-      "BTC.PRICE_USD",
-      "BTC.REALIZED_PRICE",
-      "BTC.BALANCED_PRICE_EST",
+  // ── Resolution → seconds ──
+  var RES_SEC = { "1D": 86400, "1W": 604800, "1M": 2592000, "1Y": 31536000 };
+
+  // ── Categories for symbols ──
+  var BOTTOM_SYMBOLS = new Set(["BTC.NUPL","BTC.PUELL_MULTIPLE","BTC.FEAR_GREED_INDEX","BTC.MA200_RATIO","BTC.PI_CYCLE"]);
+  var PRICING_SYMBOLS = new Set(["BTC.PRICE_USD","BTC.REALIZED_PRICE","BTC.BALANCED_PRICE_EST","BTC.TRANSFERRED_PRICE_EST","BTC.DELTA_PRICE","BTC.MARKET_CAP","BTC.REALIZED_CAP","BTC.AVERAGE_CAP","BTC.MVRV","BTC.MINER_REVENUE","BTC.CIRCULATING_SUPPLY"]);
+
+  var PRIORITY = ["BTC.PRICE_USD","BTC.REALIZED_PRICE","BTC.BALANCED_PRICE_EST","BTC.NUPL","BTC.PUELL_MULTIPLE","BTC.FEAR_GREED_INDEX"];
+
+  // ── Bottom signal thresholds ──
+  var SIGNAL_CONFIG = {
+    "BTC.NUPL":             { id: "sig-nupl",  green: [0, Infinity], yellow: [-0.5, 0], red: [-Infinity, -0.5] },
+    "BTC.PUELL_MULTIPLE":   { id: "sig-puell", green: [1, Infinity], yellow: [0.5, 1],  red: [-Infinity, 0.5] },
+    "BTC.MA200_RATIO":      { id: "sig-ma200", green: [1, Infinity], yellow: [0.8, 1],  red: [-Infinity, 0.8] },
+    "BTC.PI_CYCLE":         { id: "sig-pi",    green: [1, Infinity], yellow: [0.5, 1],  red: [-Infinity, 0.5] },
+    "BTC.FEAR_GREED_INDEX": { id: "sig-fg",    green: [50, Infinity],yellow: [20, 50],  red: [-Infinity, 20] },
+  };
+
+  // ── Helpers ──
+  function fmtNum(v) {
+    var a = Math.abs(v);
+    if (a >= 1e12) return (v/1e12).toFixed(2)+"T";
+    if (a >= 1e9)  return (v/1e9).toFixed(2)+"B";
+    if (a >= 1e6)  return (v/1e6).toFixed(2)+"M";
+    if (a >= 1e3)  return (v/1e3).toFixed(2)+"K";
+    if (a >= 1)    return v.toFixed(4);
+    return v.toFixed(6);
+  }
+
+  function tsLabel(ts, res) {
+    var d = new Date(ts * 1000);
+    if (res === "1Y") return d.getFullYear().toString();
+    if (res === "1M") return d.toLocaleDateString("en-US",{year:"numeric",month:"short"});
+    if (res === "1W") return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  }
+
+  function shortTime() { return new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
+
+  function asLocal(ts) { return new Date(ts*1000).toLocaleString(); }
+
+  async function getJson(url) {
+    var r = await fetch(url);
+    if (!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }
+
+  function symbolCategory(s) {
+    if (BOTTOM_SYMBOLS.has(s)) return "bottom";
+    if (PRICING_SYMBOLS.has(s)) return "pricing";
+    return "network";
+  }
+
+  // ── Signal level classification ──
+  function signalLevel(sym, val) {
+    var cfg = SIGNAL_CONFIG[sym];
+    if (!cfg) return "green";
+    if (val >= cfg.red[0] && val < cfg.red[1]) return "red";
+    if (val >= cfg.yellow[0] && val < cfg.yellow[1]) return "yellow";
+    return "green";
+  }
+
+  function updateSignal(sym, val) {
+    var cfg = SIGNAL_CONFIG[sym];
+    if (!cfg) return;
+    var tile = document.getElementById(cfg.id);
+    if (!tile) return;
+    var level = signalLevel(sym, val);
+    tile.setAttribute("data-level", level);
+    tile.querySelector(".signal-val").textContent = fmtNum(val);
+    var dot = tile.querySelector(".signal-dot");
+    dot.className = "signal-dot " + level;
+  }
+
+  // ── Build history URL with resolution ──
+  function histUrl(sym, from, to, res) {
+    return "/metrics/"+encodeURIComponent(sym)+"/history?from="+from+"&to="+to+"&resolution="+res;
+  }
+
+  // ── Charts ──
+  var cardCharts = [];
+
+  function destroyCardCharts() {
+    cardCharts.forEach(function(c){c.destroy();});
+    cardCharts = [];
+  }
+
+  function drawCardChart(canvas, points, sym) {
+    var res = resEl.value;
+    var labels = points.map(function(p){return tsLabel(p.timestamp, res);});
+    var values = points.map(function(p){return Number(p.value);});
+    var color = BOTTOM_SYMBOLS.has(sym) ? "#c084fc" : sym.includes("EST") ? "#ffc16b" : "#5dffba";
+    var ch = new Chart(canvas,{
+      type:"line",
+      data:{labels:labels,datasets:[{data:values,borderColor:color,borderWidth:1.5,fill:true,backgroundColor:color+"18",pointRadius:0,tension:0.2}]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:200},plugins:{legend:{display:false}},scales:{x:{display:false},y:{ticks:{maxTicksLimit:3,font:{size:10}},grid:{color:"#1a3d2e"}}}}
+    });
+    cardCharts.push(ch);
+  }
+
+  function drawMainChart(price, realized, balanced) {
+    if (mainChartInstance) { mainChartInstance.destroy(); mainChartInstance = null; }
+    var res = resEl.value;
+    var tsSet = new Set();
+    price.forEach(function(p){tsSet.add(p.timestamp);});
+    realized.forEach(function(p){tsSet.add(p.timestamp);});
+    balanced.forEach(function(p){tsSet.add(p.timestamp);});
+    var sortedTs = Array.from(tsSet).sort(function(a,b){return a-b;});
+
+    function toMap(arr){var m=new Map();arr.forEach(function(p){m.set(p.timestamp,Number(p.value));});return m;}
+    var pm=toMap(price), rm=toMap(realized), bm=toMap(balanced);
+    var labels=sortedTs.map(function(ts){return tsLabel(ts,res);});
+
+    mainChartInstance = new Chart(mainCanvas,{
+      type:"line",
+      data:{labels:labels,datasets:[
+        {label:"BTC Price",data:sortedTs.map(function(t){return pm.get(t)||null;}),borderColor:"#5dffba",borderWidth:2,fill:false,pointRadius:0,tension:0.2,spanGaps:true},
+        {label:"Realized",data:sortedTs.map(function(t){return rm.get(t)||null;}),borderColor:"#3dd6b5",borderWidth:2,fill:false,pointRadius:0,tension:0.2,spanGaps:true},
+        {label:"Balanced (EST)",data:sortedTs.map(function(t){return bm.get(t)||null;}),borderColor:"#ffc16b",borderWidth:2,fill:false,pointRadius:0,tension:0.2,spanGaps:true},
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:{duration:300},
+        interaction:{mode:"index",intersect:false},
+        plugins:{legend:{display:false},tooltip:{
+          backgroundColor:"rgba(4,17,13,0.92)",borderColor:"#245540",borderWidth:1,
+          titleColor:"#55ffb3",bodyColor:"#dff9ed",
+          callbacks:{label:function(ctx){return " "+ctx.dataset.label+": $"+fmtNum(ctx.parsed.y);}}
+        }},
+        scales:{
+          x:{ticks:{color:"#8db8a6",maxTicksLimit:10,maxRotation:0,font:{size:10}},grid:{color:"#1a3d2e"}},
+          y:{type:"logarithmic",ticks:{color:"#8db8a6",maxTicksLimit:6,callback:function(v){return "$"+fmtNum(v);},font:{size:10}},grid:{color:"#1a3d2e"}}
+        }
+      }
+    });
+  }
+
+  // ── Card builder ──
+  function buildCard(sym, latest, histData) {
+    var card = document.createElement("article");
+    card.className = "card";
+    var val = Number(latest.value);
+    var rows = histData.data || [];
+    var cat = symbolCategory(sym);
+    var catTag = cat === "bottom" ? '<span class="tag bottom">SIGNAL</span>' :
+                 sym.includes("EST") ? '<span class="tag est">EST</span>' : "";
+    var chain = sym.startsWith("BTC") ? "BTC" : sym.startsWith("ETH") ? "ETH" : "";
+
+    card.innerHTML =
+      '<div class="symbol">'+sym+' <span class="tag">'+chain+'</span> '+catTag+'</div>'+
+      '<div class="value">'+fmtNum(val)+'</div>'+
+      '<div class="meta">'+asLocal(latest.timestamp)+'</div>'+
+      '<div class="card-chart"><canvas></canvas></div>'+
+      (rows.length?'':'<p class="empty">No data in range</p>')+
+      '<details><summary>Last 10 points</summary><table><thead><tr><th>Time</th><th>Value</th></tr></thead><tbody>'+
+      rows.slice(-10).reverse().map(function(r){return '<tr><td>'+asLocal(r.timestamp)+'</td><td>'+fmtNum(Number(r.value))+'</td></tr>';}).join("")+
+      '</tbody></table></details>';
+
+    if (rows.length) {
+      drawCardChart(card.querySelector("canvas"), rows, sym);
+    }
+    return card;
+  }
+
+  // ── Main loader ──
+  async function loadAll() {
+    var periods = Number(periodsEl.value);
+    var res = resEl.value;
+    var cat = catEl.value;
+    var query = searchEl.value.trim().toUpperCase();
+    var bucket = RES_SEC[res] || 86400;
+    var now = Math.floor(Date.now()/1000);
+    var fromTs = now - (periods * bucket);
+
+    statusEl.textContent = "Loading…";
+    destroyCardCharts();
+    cardsEl.innerHTML = "";
+
+    // Fetch symbols + main chart + signal values in parallel
+    var [symbolsResp, priceH, realizedH, balancedH] = await Promise.all([
+      getJson("/metrics"),
+      getJson(histUrl("BTC.PRICE_USD", 0, now, res)),
+      getJson(histUrl("BTC.REALIZED_PRICE", 0, now, res)),
+      getJson(histUrl("BTC.BALANCED_PRICE_EST", 0, now, res)),
     ]);
 
-    function fmtNumber(value) {
-      const abs = Math.abs(value);
-      if (abs >= 1e12) return (value / 1e12).toFixed(2) + "T";
-      if (abs >= 1e9)  return (value / 1e9).toFixed(2)  + "B";
-      if (abs >= 1e6)  return (value / 1e6).toFixed(2)  + "M";
-      if (abs >= 1e3)  return (value / 1e3).toFixed(2)  + "K";
-      if (abs >= 1)    return value.toFixed(4);
-      return value.toFixed(8);
-    }
+    drawMainChart(priceH.data||[], realizedH.data||[], balancedH.data||[]);
 
-    function asLocal(ts) {
-      return new Date(ts * 1000).toLocaleString();
-    }
+    var allSymbols = symbolsResp.symbols || [];
+    sumTotalEl.textContent = allSymbols.length;
+    sumBtcEl.textContent = allSymbols.filter(function(s){return s.startsWith("BTC.");}).length;
+    sumEthEl.textContent = allSymbols.filter(function(s){return s.startsWith("ETH.");}).length;
+    sumRefreshEl.textContent = shortTime();
 
-    function shortTime() {
-      return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    }
-
-    async function getJson(url) {
-      const r = await fetch(url);
-      if (!r.ok) throw new Error("HTTP " + r.status + " for " + url);
-      return r.json();
-    }
-
-    function buildTableRows(rows) {
-      const recent = rows.slice(-10).reverse();
-      return recent.map(function(row) {
-        return "<tr><td>" + asLocal(row.timestamp) + "</td><td>" + fmtNumber(Number(row.value)) + "</td></tr>";
-      }).join("");
-    }
-
-    function drawLine(canvas, points, symbol) {
-      const labels = points.map(function(p) { return new Date(p.timestamp * 1000).toLocaleDateString(); });
-      const values = points.map(function(p) { return Number(p.value); });
-      const color = symbol.includes("EST") ? "#ffc16b" : "#5dffba";
-
-      new Chart(canvas, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [{
-            data: values,
-            borderColor: color,
-            borderWidth: 2,
-            fill: true,
-            backgroundColor: color + "1f",
-            pointRadius: 0,
-            tension: 0.24
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { display: false },
-            y: { ticks: { maxTicksLimit: 4 }, grid: { color: "#224436" } }
-          }
-        }
-      });
-    }
-
-    function drawMainChart(priceData, realizedData, balancedData) {
-      if (mainChartInstance) {
-        mainChartInstance.destroy();
-        mainChartInstance = null;
-      }
-
-      // Merge timestamps from all three series
-      const tsSet = new Set();
-      priceData.forEach(function(p) { tsSet.add(p.timestamp); });
-      realizedData.forEach(function(p) { tsSet.add(p.timestamp); });
-      balancedData.forEach(function(p) { tsSet.add(p.timestamp); });
-      const sortedTs = Array.from(tsSet).sort(function(a, b) { return a - b; });
-
-      function toMap(arr) {
-        const m = new Map();
-        arr.forEach(function(p) { m.set(p.timestamp, Number(p.value)); });
-        return m;
-      }
-      const priceMap    = toMap(priceData);
-      const realizedMap = toMap(realizedData);
-      const balancedMap = toMap(balancedData);
-
-      const labels = sortedTs.map(function(ts) {
-        return new Date(ts * 1000).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-      });
-
-      mainChartInstance = new Chart(mainChartCanvas, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "BTC Price",
-              data: sortedTs.map(function(ts) { return priceMap.has(ts) ? priceMap.get(ts) : null; }),
-              borderColor: "#5dffba",
-              borderWidth: 2,
-              fill: false,
-              pointRadius: 0,
-              tension: 0.2,
-              spanGaps: true,
-            },
-            {
-              label: "Realized Price",
-              data: sortedTs.map(function(ts) { return realizedMap.has(ts) ? realizedMap.get(ts) : null; }),
-              borderColor: "#3dd6b5",
-              borderWidth: 2,
-              fill: false,
-              pointRadius: 0,
-              tension: 0.2,
-              spanGaps: true,
-            },
-            {
-              label: "Balanced Price (EST)",
-              data: sortedTs.map(function(ts) { return balancedMap.has(ts) ? balancedMap.get(ts) : null; }),
-              borderColor: "#ffc16b",
-              borderWidth: 2,
-              fill: false,
-              pointRadius: 0,
-              tension: 0.2,
-              spanGaps: true,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: "index", intersect: false },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: "rgba(4,17,13,0.92)",
-              borderColor: "#245540",
-              borderWidth: 1,
-              titleColor: "#55ffb3",
-              bodyColor: "#dff9ed",
-              callbacks: {
-                label: function(ctx) { return " " + ctx.dataset.label + ": $" + fmtNumber(ctx.parsed.y); }
-              }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: "#8db8a6", maxTicksLimit: 10, maxRotation: 0, font: { size: 11 } },
-              grid: { color: "#1a3d2e" }
-            },
-            y: {
-              type: "logarithmic",
-              ticks: {
-                color: "#8db8a6",
-                maxTicksLimit: 8,
-                callback: function(v) { return "$" + fmtNumber(v); },
-                font: { size: 11 }
-              },
-              grid: { color: "#1a3d2e" }
-            }
-          }
-        }
-      });
-    }
-
-    function metricCard(symbol, latest, history) {
-      const card = document.createElement("article");
-      card.className = "card";
-      const latestValue = Number(latest.value);
-      const rows = history.data || [];
-      const symType = symbol.includes("BTC") ? "BTC" : symbol.includes("ETH") ? "ETH" : "OTHER";
-      const estTag = symbol.includes("EST") ? '<span class="tag est">EST</span>' : "";
-
-      card.innerHTML =
-        '<div class="symbol">' + symbol + ' <span class="tag">' + symType + '</span> ' + estTag + '</div>' +
-        '<div class="value">' + fmtNumber(latestValue) + '</div>' +
-        '<div class="meta">Last updated: ' + asLocal(latest.timestamp) + '</div>' +
-        '<div class="chart-wrap"><canvas></canvas></div>' +
-        (rows.length ? "" : '<p class="empty">No history in selected range.</p>') +
-        '<details>' +
-          '<summary>Show last 10 data points</summary>' +
-          '<table>' +
-            '<thead><tr><th>Time</th><th>Value</th></tr></thead>' +
-            '<tbody>' + buildTableRows(rows) + '</tbody>' +
-          '</table>' +
-        '</details>';
-
-      if (rows.length) {
-        drawLine(card.querySelector("canvas"), rows, symbol);
-      }
-
-      return card;
-    }
-
-    async function loadMainChart() {
-      try {
-        const now = Math.floor(Date.now() / 1000);
-        const results = await Promise.all([
-          getJson("/metrics/BTC.PRICE_USD/history?from=0&to=" + now),
-          getJson("/metrics/BTC.REALIZED_PRICE/history?from=0&to=" + now),
-          getJson("/metrics/BTC.BALANCED_PRICE_EST/history?from=0&to=" + now),
-        ]);
-        drawMainChart(results[0].data || [], results[1].data || [], results[2].data || []);
-      } catch (err) {
-        console.warn("Main chart failed to load:", err.message);
-      }
-    }
-
-    async function loadAll() {
-      const rangeDays = Number(daysEl.value);
-      const now = Math.floor(Date.now() / 1000);
-      const fromTs = now - rangeDays * 24 * 60 * 60;
-      const query = searchEl.value.trim().toUpperCase();
-
-      statusEl.textContent = "Loading symbols...";
-      const symbolsResp = await getJson("/metrics");
-      let symbols = symbolsResp.symbols || [];
-      symbols.sort(function(a, b) {
-        const ia = PRIORITY_SYMBOLS.indexOf(a);
-        const ib = PRIORITY_SYMBOLS.indexOf(b);
-        if (ia !== -1 && ib !== -1) return ia - ib;
-        if (ia !== -1) return -1;
-        if (ib !== -1) return 1;
-        return a.localeCompare(b);
-      });
-
-      sumTotalEl.textContent = symbols.length;
-      sumBtcEl.textContent  = symbols.filter(function(s) { return s.startsWith("BTC."); }).length;
-      sumEthEl.textContent  = symbols.filter(function(s) { return s.startsWith("ETH."); }).length;
-      sumRefreshEl.textContent = shortTime();
-
-      if (query) {
-        symbols = symbols.filter(function(s) { return s.includes(query); });
-      }
-
-      statusEl.textContent = "Loading " + symbols.length + " symbols...";
-      cardsEl.innerHTML = "";
-
-      const chunks = [];
-      for (let i = 0; i < symbols.length; i += 6) {
-        chunks.push(symbols.slice(i, i + 6));
-      }
-
-      for (const chunk of chunks) {
-        const data = await Promise.all(chunk.map(async function(symbol) {
-          const histFrom = FULL_HISTORY_SYMBOLS.has(symbol) ? 0 : fromTs;
-          const pair = await Promise.all([
-            getJson("/metrics/" + encodeURIComponent(symbol)),
-            getJson("/metrics/" + encodeURIComponent(symbol) + "/history?from=" + histFrom + "&to=" + now),
-          ]);
-          return { symbol: symbol, latest: pair[0], history: pair[1] };
-        }));
-
-        for (const item of data) {
-          cardsEl.appendChild(metricCard(item.symbol, item.latest, item.history));
-        }
-      }
-
-      statusEl.textContent = "Done. " + symbols.length + " symbols loaded (range: " + rangeDays + " days).";
-    }
-
-    async function boot() {
-      try {
-        await Promise.all([loadAll(), loadMainChart()]);
-      } catch (err) {
-        statusEl.textContent = "Error loading: " + err.message;
-        statusEl.style.color = "var(--danger)";
-      }
-    }
-
-    refreshEl.addEventListener("click", boot);
-    daysEl.addEventListener("change", boot);
-    searchEl.addEventListener("input", function() {
-      clearTimeout(window.__searchTimer);
-      window.__searchTimer = setTimeout(boot, 260);
+    // Sort: priority first, then alphabetical
+    allSymbols.sort(function(a,b){
+      var ia=PRIORITY.indexOf(a), ib=PRIORITY.indexOf(b);
+      if(ia!==-1 && ib!==-1) return ia-ib;
+      if(ia!==-1) return -1;
+      if(ib!==-1) return 1;
+      return a.localeCompare(b);
     });
 
-    boot();
-  </script>
+    // Filter by category
+    var symbols = allSymbols;
+    if (cat !== "all") {
+      symbols = symbols.filter(function(s){ return symbolCategory(s) === cat; });
+    }
+    if (query) {
+      symbols = symbols.filter(function(s){ return s.includes(query); });
+    }
+
+    // Category title
+    var catNames = {all:"All Metrics",pricing:"Pricing Metrics",bottom:"Bottom Signal Metrics",network:"Network Metrics"};
+    cardsTitleEl.textContent = (catNames[cat]||"All Metrics")+" ("+symbols.length+")";
+
+    statusEl.textContent = "Loading "+symbols.length+" symbols…";
+
+    // Load all card data in parallel
+    var cardData = await Promise.all(symbols.map(function(sym){
+      return Promise.all([
+        getJson("/metrics/"+encodeURIComponent(sym)),
+        getJson(histUrl(sym, fromTs, now, res)),
+      ]).then(function(pair){return {symbol:sym,latest:pair[0],history:pair[1]};});
+    }));
+
+    // Render cards
+    for (var i=0; i<cardData.length; i++) {
+      var item = cardData[i];
+      cardsEl.appendChild(buildCard(item.symbol, item.latest, item.history));
+      // Update bottom signals
+      if (SIGNAL_CONFIG[item.symbol]) {
+        updateSignal(item.symbol, Number(item.latest.value));
+      }
+    }
+
+    statusEl.textContent = symbols.length+" symbols · "+periods+" × "+res.replace("1","")+" · "+shortTime();
+  }
+
+  async function boot() {
+    try { await loadAll(); }
+    catch(err) { statusEl.textContent = "Error: "+err.message; statusEl.style.color = "var(--danger)"; }
+  }
+
+  refreshEl.addEventListener("click", boot);
+  periodsEl.addEventListener("change", boot);
+  resEl.addEventListener("change", boot);
+  catEl.addEventListener("change", boot);
+  searchEl.addEventListener("input", function(){
+    clearTimeout(window.__st);
+    window.__st = setTimeout(boot, 150);
+  });
+
+  boot();
+})();
+</script>
 </body>
 </html>

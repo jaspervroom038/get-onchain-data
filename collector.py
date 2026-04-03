@@ -13,14 +13,21 @@ BTC.REALIZED_PRICE     – average on-chain cost basis of the market (USD)
 BTC.DELTA_PRICE        – (Realized Cap − Average Cap) / Supply (USD)
 BTC.TRANSFERRED_PRICE_EST – estimated transferred price proxy (USD)
 BTC.BALANCED_PRICE_EST    – estimated balanced price proxy (USD)
+BTC.NUPL               – Net Unrealized Profit/Loss (1 - 1/MVRV)
+BTC.PUELL_MULTIPLE     – daily miner revenue / 365-day MA of miner revenue
+BTC.MINER_REVENUE      – daily miner revenue (USD)
+BTC.FEAR_GREED_INDEX   – Crypto Fear & Greed Index (0-100)
+BTC.MA200_RATIO        – BTC Price / 200-day moving average
+BTC.PI_CYCLE           – 111-day MA / (2 × 350-day MA)
 """
 
 import logging
+import time
 from typing import Any, Optional
 
 import httpx
 
-from storage import get_average_metric
+from storage import get_average_metric, get_daily_sma
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +36,7 @@ _BLOCKCHAIN_INFO_STATS = "https://api.blockchain.info/stats"
 _BLOCKCHAIR_BTC = "https://api.blockchair.com/bitcoin/stats"
 _BLOCKCHAIR_ETH = "https://api.blockchair.com/ethereum/stats"
 _COINMETRICS_TIMESERIES = "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics"
+_FEAR_GREED_API = "https://api.alternative.me/fng/"
 
 # Seconds to wait before giving up on an HTTP request
 _REQUEST_TIMEOUT = 15
@@ -81,7 +89,7 @@ async def _coinmetrics_latest_row() -> dict[str, Any]:
         _COINMETRICS_TIMESERIES,
         params={
             "assets": "btc",
-            "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur",
+            "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur,RevUSD",
             "frequency": "1d",
             "limit_per_asset": 1,
         },
@@ -95,33 +103,21 @@ async def _coinmetrics_latest_row() -> dict[str, Any]:
 async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
     """Collect BTC pricing-model inputs from Coin Metrics and derive metrics.
 
-    The Coin Metrics community API is free and provides:
-    - Market Cap (CapMrktCurUSD)
-    - MVRV (CapMVRVCur)
-    - Circulating Supply (SplyCur)
-
-    Derived metrics:
-    - BTC Price = Market Cap / Supply
-    - Realized Cap = Market Cap / MVRV
-    - Realized Price = Realized Cap / Supply
-    - Average Cap = running average of BTC.MARKET_CAP in local storage
-    - Delta Price = (Realized Cap - Average Cap) / Supply
-
-    Transferred/Balanced are not directly available from free sources,
-    so they are exposed as clearly labeled estimates.
-
     Metrics
     -------
-    BTC.MARKET_CAP           – Market capitalization (USD)
-    BTC.MVRV                 – Market Cap / Realized Cap ratio
-    BTC.CIRCULATING_SUPPLY   – circulating supply (BTC)
-    BTC.PRICE_USD            – spot proxy from market cap / supply (USD)
-    BTC.REALIZED_CAP         – Market Cap / MVRV (USD)
-    BTC.AVERAGE_CAP          – running average Market Cap from local DB (USD)
-    BTC.REALIZED_PRICE       – Realized Cap / Circulating Supply (USD)
-    BTC.DELTA_PRICE          – (Realized Cap − Average Cap) / Supply (USD)
-    BTC.BALANCED_PRICE_EST   – estimated balanced price proxy (USD)
-    BTC.TRANSFERRED_PRICE_EST – estimated transferred price proxy (USD)
+    BTC.MARKET_CAP             – Market capitalization (USD)
+    BTC.MVRV                   – Market Cap / Realized Cap ratio
+    BTC.CIRCULATING_SUPPLY     – circulating supply (BTC)
+    BTC.PRICE_USD              – spot proxy from market cap / supply (USD)
+    BTC.REALIZED_CAP           – Market Cap / MVRV (USD)
+    BTC.AVERAGE_CAP            – running average Market Cap from local DB (USD)
+    BTC.REALIZED_PRICE         – Realized Cap / Circulating Supply (USD)
+    BTC.DELTA_PRICE            – (Realized Cap − Average Cap) / Supply (USD)
+    BTC.BALANCED_PRICE_EST     – estimated balanced price proxy (USD)
+    BTC.TRANSFERRED_PRICE_EST  – estimated transferred price proxy (USD)
+    BTC.NUPL                   – Net Unrealized Profit/Loss = 1 − 1/MVRV
+    BTC.MINER_REVENUE          – daily miner revenue (USD)
+    BTC.PUELL_MULTIPLE         – daily revenue / 365-day MA of revenue
     """
     row = await _coinmetrics_latest_row()
 
@@ -142,11 +138,28 @@ async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
 
     delta_price = (realized_cap - average_cap) / supply
 
-    # Heuristic proxy: use Delta Price as a balanced-floor estimate.
-    balanced_est = delta_price
-    transferred_est = realized_price - balanced_est
+    # Heuristic proxy: Transferred Price ≈ Realized Price (closest free proxy),
+    # Balanced Price = (Transferred Price + Delta Price) / 2.
+    transferred_est = realized_price
+    balanced_est = (transferred_est + delta_price) / 2
 
-    return {
+    # NUPL: Net Unrealized Profit/Loss
+    nupl = 1 - (1 / mvrv)
+
+    # Miner revenue and Puell Multiple
+    rev_raw = row.get("RevUSD")
+    miner_revenue = float(rev_raw) if rev_raw is not None else 0.0
+
+    now_ts = int(time.time())
+    rev_sma_365 = await get_daily_sma("BTC.MINER_REVENUE", 365, to_ts=now_ts)
+    if rev_sma_365 and rev_sma_365 > 0 and miner_revenue > 0:
+        puell_multiple = miner_revenue / rev_sma_365
+    elif miner_revenue > 0:
+        puell_multiple = 1.0  # fallback when insufficient history
+    else:
+        puell_multiple = 0.0
+
+    result: dict[str, float] = {
         "BTC.MARKET_CAP": market_cap,
         "BTC.MVRV": mvrv,
         "BTC.CIRCULATING_SUPPLY": supply,
@@ -157,7 +170,49 @@ async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
         "BTC.DELTA_PRICE": delta_price,
         "BTC.BALANCED_PRICE_EST": balanced_est,
         "BTC.TRANSFERRED_PRICE_EST": transferred_est,
+        "BTC.NUPL": nupl,
     }
+
+    if miner_revenue > 0:
+        result["BTC.MINER_REVENUE"] = miner_revenue
+        result["BTC.PUELL_MULTIPLE"] = puell_multiple
+
+    return result
+
+
+async def collect_fear_greed() -> dict[str, float]:
+    """Collect Fear & Greed Index from alternative.me (free, no key)."""
+    data = await _get_json(_FEAR_GREED_API, params={"limit": "1"})
+    entries = data.get("data", [])
+    if not entries:
+        raise ValueError("Empty Fear & Greed response")
+    return {"BTC.FEAR_GREED_INDEX": float(entries[0]["value"])}
+
+
+async def collect_btc_derived_ma() -> dict[str, float]:
+    """Derive moving-average-based metrics from stored BTC.PRICE_USD history.
+
+    BTC.MA200_RATIO – BTC Price / 200-day SMA
+    BTC.PI_CYCLE    – 111-day SMA / (2 × 350-day SMA)
+    """
+    now_ts = int(time.time())
+    result: dict[str, float] = {}
+
+    sma200 = await get_daily_sma("BTC.PRICE_USD", 200, to_ts=now_ts)
+    if sma200 and sma200 > 0:
+        # Fetch latest price from DB
+        from storage import get_history
+        rows = await get_history("BTC.PRICE_USD", 0, now_ts)
+        if rows:
+            latest_price = rows[-1]["value"]
+            result["BTC.MA200_RATIO"] = latest_price / sma200
+
+    sma111 = await get_daily_sma("BTC.PRICE_USD", 111, to_ts=now_ts)
+    sma350 = await get_daily_sma("BTC.PRICE_USD", 350, to_ts=now_ts)
+    if sma111 and sma350 and sma350 > 0:
+        result["BTC.PI_CYCLE"] = sma111 / (2 * sma350)
+
+    return result
 
 
 async def collect_all() -> dict[str, float]:
@@ -173,6 +228,8 @@ async def collect_all() -> dict[str, float]:
         ("Blockchair BTC", collect_btc_blockchair),
         ("Blockchair ETH", collect_eth_blockchair),
         ("Coin Metrics BTC", collect_btc_coinmetrics_pricing),
+        ("Fear & Greed Index", collect_fear_greed),
+        ("BTC derived MA", collect_btc_derived_ma),
     ]
 
     for name, collector in collectors:

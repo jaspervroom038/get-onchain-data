@@ -132,6 +132,35 @@ SYMBOL_META: dict[str, dict[str, Any]] = {
         "description": "Bitcoin Delta Price (fundamental/technical floor model)",
         "unit": "USD",
     },
+    "BTC.NUPL": {
+        "description": "Bitcoin Net Unrealized Profit/Loss (1 − 1/MVRV)",
+        "unit": "ratio",
+        "category": "bottom",
+    },
+    "BTC.MINER_REVENUE": {
+        "description": "Bitcoin Daily Miner Revenue",
+        "unit": "USD",
+    },
+    "BTC.PUELL_MULTIPLE": {
+        "description": "Bitcoin Puell Multiple (revenue / 365d MA revenue)",
+        "unit": "ratio",
+        "category": "bottom",
+    },
+    "BTC.FEAR_GREED_INDEX": {
+        "description": "Crypto Fear & Greed Index (0–100)",
+        "unit": "index",
+        "category": "bottom",
+    },
+    "BTC.MA200_RATIO": {
+        "description": "Bitcoin Price / 200-day Moving Average",
+        "unit": "ratio",
+        "category": "bottom",
+    },
+    "BTC.PI_CYCLE": {
+        "description": "Bitcoin Pi Cycle (111-DMA / 2×350-DMA)",
+        "unit": "ratio",
+        "category": "bottom",
+    },
 }
 
 # Resolutions advertised to TradingView (in minutes for intraday, D/W/M for daily+)
@@ -318,9 +347,27 @@ async def get_metric_history(
     symbol: str,
     from_ts: int = Query(0, alias="from", description="Start unix timestamp"),
     to_ts: int = Query(None, alias="to", description="End unix timestamp"),
+    resolution: str = Query("raw", description="Aggregation: raw, 1D, 1W, 1M, 1Y"),
 ) -> dict:
-    """Return historical data-points for the requested symbol."""
+    """Return historical data-points for the requested symbol.
+
+    When *resolution* is set to ``1D``, ``1W``, ``1M`` or ``1Y`` the raw
+    data points are grouped into time-buckets and only the last value per
+    bucket is returned (daily close logic).  ``raw`` returns every stored
+    data point.
+    """
     sym = symbol.upper()
     end = to_ts if to_ts is not None else int(time.time())
     rows = await get_history(sym, from_ts, end)
+
+    _RES_MAP = {"1D": 86400, "1W": 604800, "1M": 2592000, "1Y": 31536000}
+    bucket_size = _RES_MAP.get(resolution.upper())
+
+    if bucket_size and rows:
+        buckets: dict[int, dict] = {}
+        for row in rows:
+            bucket = (row["timestamp"] // bucket_size) * bucket_size
+            buckets[bucket] = row  # last write wins → close value
+        rows = [buckets[k] for k in sorted(buckets)]
+
     return {"symbol": sym, "data": rows}
