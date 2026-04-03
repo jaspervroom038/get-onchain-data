@@ -9,6 +9,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from collector import collect_all
 from config import settings
+from sheets_sync import sync_sheets_latest
 from storage import save_metric
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,9 @@ async def run_collection() -> None:
             logger.error("Failed to save metric %s: %s", symbol, exc)
 
     logger.info("Stored %d metrics (ts=%d)", len(metrics), ts)
+
+    # Sync latest Realized/Balanced data point to Google Sheets (no-op if unconfigured)
+    await sync_sheets_latest(ts, metrics)
 
 
 def create_scheduler() -> AsyncIOScheduler:

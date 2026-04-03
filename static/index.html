@@ -22,11 +22,7 @@
       --warn: #ffc16b;
       --danger: #ff8f7d;
     }
-
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: "Space Grotesk", sans-serif;
@@ -40,13 +36,7 @@
       background-size: 24px 24px, 24px 24px, auto, auto;
       min-height: 100vh;
     }
-
-    .page {
-      max-width: 1320px;
-      margin: 0 auto;
-      padding: 1rem 1rem 1.4rem;
-    }
-
+    .page { max-width: 1320px; margin: 0 auto; padding: 1rem 1rem 1.4rem; }
     .hero {
       background: linear-gradient(160deg, rgba(13, 36, 27, 0.92), rgba(10, 29, 22, 0.92));
       border: 1px solid var(--line);
@@ -54,7 +44,6 @@
       padding: 1rem 1rem 0.9rem;
       box-shadow: 0 14px 40px rgba(0, 0, 0, 0.38);
     }
-
     h1 {
       margin: 0;
       font-size: 1.4rem;
@@ -64,53 +53,18 @@
       color: var(--accent);
       text-shadow: 0 0 14px rgba(85, 255, 179, 0.35);
     }
-
-    .subtitle {
-      margin: 0.35rem 0 0;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .controls {
-      margin-top: 0.9rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      align-items: center;
-    }
-
+    .subtitle { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.9rem; }
+    .controls { margin-top: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
     .summary {
       margin-top: 0.8rem;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 0.55rem;
     }
-
-    .tile {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 0.55rem 0.65rem;
-      background: rgba(18, 42, 32, 0.75);
-    }
-
-    .tile-label {
-      color: var(--muted);
-      font-size: 0.74rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .tile-value {
-      margin-top: 0.18rem;
-      font-size: 1.05rem;
-      font-family: "Share Tech Mono", monospace;
-      color: var(--accent);
-    }
-
-    .chip,
-    select,
-    button,
-    input {
+    .tile { border: 1px solid var(--line); border-radius: 12px; padding: 0.55rem 0.65rem; background: rgba(18, 42, 32, 0.75); }
+    .tile-label { color: var(--muted); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .tile-value { margin-top: 0.18rem; font-size: 1.05rem; font-family: "Share Tech Mono", monospace; color: var(--accent); }
+    .chip, select, button, input {
       font: inherit;
       border-radius: 999px;
       border: 1px solid var(--line);
@@ -118,15 +72,8 @@
       background: rgba(10, 31, 23, 0.94);
       color: var(--ink);
     }
-
-    input {
-      min-width: 230px;
-    }
-
-    input::placeholder {
-      color: #6f9a8a;
-    }
-
+    input { min-width: 230px; }
+    input::placeholder { color: #6f9a8a; }
     button {
       border-color: var(--accent-soft);
       background: linear-gradient(120deg, #2fb07a, #58db98);
@@ -134,14 +81,30 @@
       cursor: pointer;
       font-weight: 700;
     }
-
-    .grid {
-      margin-top: 1.05rem;
-      display: grid;
-      gap: 0.75rem;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    /* Main combined chart */
+    .main-chart-section {
+      margin-top: 0.75rem;
+      background: linear-gradient(160deg, rgba(13, 36, 27, 0.95), rgba(10, 29, 22, 0.95));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
     }
-
+    .main-chart-header { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.75rem; }
+    .main-chart-title {
+      font-family: "Share Tech Mono", monospace;
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      flex: 1;
+    }
+    .legend { display: flex; flex-wrap: wrap; gap: 0.9rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--ink); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .main-chart-wrap { position: relative; width: 100%; height: 380px; }
+    /* Metric cards */
+    .grid { margin-top: 1.05rem; display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
     .card {
       background: linear-gradient(180deg, rgba(15, 39, 29, 0.95), rgba(12, 31, 24, 0.95));
       border: 1px solid var(--line);
@@ -155,7 +118,6 @@
       position: relative;
       overflow: hidden;
     }
-
     .card::after {
       content: "";
       position: absolute;
@@ -163,18 +125,10 @@
       pointer-events: none;
       background: linear-gradient(120deg, transparent, rgba(88, 224, 160, 0.06), transparent);
     }
-
     @keyframes rise {
-      from {
-        transform: translateY(8px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
+      from { transform: translateY(8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
-
     .symbol {
       font-size: 0.74rem;
       color: var(--muted);
@@ -184,34 +138,10 @@
       align-items: center;
       gap: 0.45rem;
     }
-
-    .tag {
-      border: 1px solid #466f5d;
-      padding: 0.08rem 0.36rem;
-      border-radius: 999px;
-      font-size: 0.65rem;
-      letter-spacing: 0.06em;
-      color: #bfe9d4;
-    }
-
-    .tag.est {
-      border-color: #87673a;
-      color: #ffd597;
-    }
-
-    .value {
-      font-size: 1.24rem;
-      font-weight: 700;
-      color: var(--accent);
-      font-family: "Share Tech Mono", monospace;
-      word-break: break-word;
-    }
-
-    .meta {
-      color: var(--muted);
-      font-size: 0.78rem;
-    }
-
+    .tag { border: 1px solid #466f5d; padding: 0.08rem 0.36rem; border-radius: 999px; font-size: 0.65rem; letter-spacing: 0.06em; color: #bfe9d4; }
+    .tag.est { border-color: #87673a; color: #ffd597; }
+    .value { font-size: 1.24rem; font-weight: 700; color: var(--accent); font-family: "Share Tech Mono", monospace; word-break: break-word; }
+    .meta { color: var(--muted); font-size: 0.78rem; }
     .chart-wrap {
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -219,67 +149,19 @@
       background: linear-gradient(180deg, rgba(7, 22, 16, 0.92), rgba(9, 28, 20, 0.92));
       min-height: 160px;
     }
-
-    .empty {
-      color: var(--warn);
-      font-size: 0.86rem;
-      margin: 0.2rem 0 0;
-    }
-
-    details {
-      border-top: 1px dashed var(--line);
-      padding-top: 0.5rem;
-    }
-
-    summary {
-      cursor: pointer;
-      color: #9ee4c2;
-      font-weight: 600;
-      font-size: 0.86rem;
-    }
-
-    table {
-      width: 100%;
-      margin-top: 0.45rem;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-    }
-
-    td,
-    th {
-      border-bottom: 1px solid var(--line);
-      padding: 0.28rem;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .status {
-      margin-top: 0.75rem;
-      color: var(--muted);
-      font-size: 0.83rem;
-      min-height: 1.2rem;
-    }
-
+    .empty { color: var(--warn); font-size: 0.86rem; margin: 0.2rem 0 0; }
+    details { border-top: 1px dashed var(--line); padding-top: 0.5rem; }
+    summary { cursor: pointer; color: #9ee4c2; font-weight: 600; font-size: 0.86rem; }
+    table { width: 100%; margin-top: 0.45rem; border-collapse: collapse; font-size: 0.8rem; }
+    td, th { border-bottom: 1px solid var(--line); padding: 0.28rem; text-align: left; vertical-align: top; }
+    .status { margin-top: 0.75rem; color: var(--muted); font-size: 0.83rem; min-height: 1.2rem; }
     @media (max-width: 640px) {
-      .page {
-        padding: 0.75rem;
-      }
-
-      h1 {
-        font-size: 1.08rem;
-      }
-
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .value {
-        font-size: 1rem;
-      }
-
-      input {
-        min-width: 180px;
-      }
+      .page { padding: 0.75rem; }
+      h1 { font-size: 1.08rem; }
+      .grid { grid-template-columns: 1fr; }
+      .value { font-size: 1rem; }
+      input { min-width: 180px; }
+      .main-chart-wrap { height: 240px; }
     }
   </style>
 </head>
@@ -287,37 +169,61 @@
   <main class="page">
     <section class="hero">
       <h1>On-Chain Metrics Dashboard // Matrix Console</h1>
-      <p class="subtitle">Realtime monitor met snelle signalen, duidelijke prioriteit en direct inzicht in recente history.</p>
+      <p class="subtitle">Real-time monitor with fast signals, clear priority, and direct insight into recent history.</p>
       <div class="controls">
         <span class="chip">History Range</span>
         <select id="days">
-          <option value="7">Laatste 7 dagen</option>
-          <option value="30" selected>Laatste 30 dagen</option>
-          <option value="90">Laatste 90 dagen</option>
-          <option value="365">Laatste 365 dagen</option>
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last 365 days</option>
         </select>
-        <button id="refresh">Vernieuwen</button>
-        <input id="search" placeholder="Filter op BTC, ETH, PRICE..." />
+        <button id="refresh">Refresh</button>
+        <input id="search" placeholder="Filter by BTC, ETH, PRICE..." />
       </div>
       <div class="summary">
         <div class="tile">
-          <div class="tile-label">Totaal symbolen</div>
+          <div class="tile-label">Total symbols</div>
           <div class="tile-value" id="sum-total">-</div>
         </div>
         <div class="tile">
-          <div class="tile-label">BTC symbolen</div>
+          <div class="tile-label">BTC symbols</div>
           <div class="tile-value" id="sum-btc">-</div>
         </div>
         <div class="tile">
-          <div class="tile-label">ETH symbolen</div>
+          <div class="tile-label">ETH symbols</div>
           <div class="tile-value" id="sum-eth">-</div>
         </div>
         <div class="tile">
-          <div class="tile-label">Laatste refresh</div>
+          <div class="tile-label">Last refresh</div>
           <div class="tile-value" id="sum-refresh">-</div>
         </div>
       </div>
-      <div class="status" id="status">Laden...</div>
+      <div class="status" id="status">Loading...</div>
+    </section>
+
+    <!-- Main combined BTC chart -->
+    <section class="main-chart-section">
+      <div class="main-chart-header">
+        <span class="main-chart-title">BTC Price &middot; Realized Price &middot; Balanced Price &mdash; Full history</span>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#5dffba;"></div>
+            BTC Price
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#3dd6b5;"></div>
+            Realized Price
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#ffc16b;"></div>
+            Balanced Price (EST)
+          </div>
+        </div>
+      </div>
+      <div class="main-chart-wrap">
+        <canvas id="mainChart"></canvas>
+      </div>
     </section>
 
     <section class="grid" id="cards"></section>
@@ -333,19 +239,29 @@
     const sumBtcEl = document.getElementById("sum-btc");
     const sumEthEl = document.getElementById("sum-eth");
     const sumRefreshEl = document.getElementById("sum-refresh");
+    const mainChartCanvas = document.getElementById("mainChart");
+    let mainChartInstance = null;
+
     const PRIORITY_SYMBOLS = [
       "BTC.PRICE_USD",
       "BTC.REALIZED_PRICE",
       "BTC.BALANCED_PRICE_EST",
     ];
 
+    // These symbols always use full history (from=0) regardless of the range selector
+    const FULL_HISTORY_SYMBOLS = new Set([
+      "BTC.PRICE_USD",
+      "BTC.REALIZED_PRICE",
+      "BTC.BALANCED_PRICE_EST",
+    ]);
+
     function fmtNumber(value) {
       const abs = Math.abs(value);
-      if (abs >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
-      if (abs >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
-      if (abs >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
-      if (abs >= 1e3) return `${(value / 1e3).toFixed(2)}K`;
-      if (abs >= 1) return value.toFixed(4);
+      if (abs >= 1e12) return (value / 1e12).toFixed(2) + "T";
+      if (abs >= 1e9)  return (value / 1e9).toFixed(2)  + "B";
+      if (abs >= 1e6)  return (value / 1e6).toFixed(2)  + "M";
+      if (abs >= 1e3)  return (value / 1e3).toFixed(2)  + "K";
+      if (abs >= 1)    return value.toFixed(4);
       return value.toFixed(8);
     }
 
@@ -359,34 +275,32 @@
 
     async function getJson(url) {
       const r = await fetch(url);
-      if (!r.ok) {
-        throw new Error(`HTTP ${r.status} for ${url}`);
-      }
+      if (!r.ok) throw new Error("HTTP " + r.status + " for " + url);
       return r.json();
     }
 
     function buildTableRows(rows) {
       const recent = rows.slice(-10).reverse();
-      return recent
-        .map((row) => `<tr><td>${asLocal(row.timestamp)}</td><td>${fmtNumber(Number(row.value))}</td></tr>`)
-        .join("");
+      return recent.map(function(row) {
+        return "<tr><td>" + asLocal(row.timestamp) + "</td><td>" + fmtNumber(Number(row.value)) + "</td></tr>";
+      }).join("");
     }
 
     function drawLine(canvas, points, symbol) {
-      const labels = points.map((p) => new Date(p.timestamp * 1000).toLocaleDateString());
-      const values = points.map((p) => Number(p.value));
+      const labels = points.map(function(p) { return new Date(p.timestamp * 1000).toLocaleDateString(); });
+      const values = points.map(function(p) { return Number(p.value); });
       const color = symbol.includes("EST") ? "#ffc16b" : "#5dffba";
 
       new Chart(canvas, {
         type: "line",
         data: {
-          labels,
+          labels: labels,
           datasets: [{
             data: values,
             borderColor: color,
             borderWidth: 2,
             fill: true,
-            backgroundColor: `${color}1f`,
+            backgroundColor: color + "1f",
             pointRadius: 0,
             tension: 0.24
           }]
@@ -394,14 +308,109 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
+          plugins: { legend: { display: false } },
           scales: {
             x: { display: false },
+            y: { ticks: { maxTicksLimit: 4 }, grid: { color: "#224436" } }
+          }
+        }
+      });
+    }
+
+    function drawMainChart(priceData, realizedData, balancedData) {
+      if (mainChartInstance) {
+        mainChartInstance.destroy();
+        mainChartInstance = null;
+      }
+
+      // Merge timestamps from all three series
+      const tsSet = new Set();
+      priceData.forEach(function(p) { tsSet.add(p.timestamp); });
+      realizedData.forEach(function(p) { tsSet.add(p.timestamp); });
+      balancedData.forEach(function(p) { tsSet.add(p.timestamp); });
+      const sortedTs = Array.from(tsSet).sort(function(a, b) { return a - b; });
+
+      function toMap(arr) {
+        const m = new Map();
+        arr.forEach(function(p) { m.set(p.timestamp, Number(p.value)); });
+        return m;
+      }
+      const priceMap    = toMap(priceData);
+      const realizedMap = toMap(realizedData);
+      const balancedMap = toMap(balancedData);
+
+      const labels = sortedTs.map(function(ts) {
+        return new Date(ts * 1000).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+      });
+
+      mainChartInstance = new Chart(mainChartCanvas, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "BTC Price",
+              data: sortedTs.map(function(ts) { return priceMap.has(ts) ? priceMap.get(ts) : null; }),
+              borderColor: "#5dffba",
+              borderWidth: 2,
+              fill: false,
+              pointRadius: 0,
+              tension: 0.2,
+              spanGaps: true,
+            },
+            {
+              label: "Realized Price",
+              data: sortedTs.map(function(ts) { return realizedMap.has(ts) ? realizedMap.get(ts) : null; }),
+              borderColor: "#3dd6b5",
+              borderWidth: 2,
+              fill: false,
+              pointRadius: 0,
+              tension: 0.2,
+              spanGaps: true,
+            },
+            {
+              label: "Balanced Price (EST)",
+              data: sortedTs.map(function(ts) { return balancedMap.has(ts) ? balancedMap.get(ts) : null; }),
+              borderColor: "#ffc16b",
+              borderWidth: 2,
+              fill: false,
+              pointRadius: 0,
+              tension: 0.2,
+              spanGaps: true,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "rgba(4,17,13,0.92)",
+              borderColor: "#245540",
+              borderWidth: 1,
+              titleColor: "#55ffb3",
+              bodyColor: "#dff9ed",
+              callbacks: {
+                label: function(ctx) { return " " + ctx.dataset.label + ": $" + fmtNumber(ctx.parsed.y); }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: "#8db8a6", maxTicksLimit: 10, maxRotation: 0, font: { size: 11 } },
+              grid: { color: "#1a3d2e" }
+            },
             y: {
-              ticks: { maxTicksLimit: 4 },
-              grid: { color: "#224436" }
+              type: "logarithmic",
+              ticks: {
+                color: "#8db8a6",
+                maxTicksLimit: 8,
+                callback: function(v) { return "$" + fmtNumber(v); },
+                font: { size: 11 }
+              },
+              grid: { color: "#1a3d2e" }
             }
           }
         }
@@ -416,29 +425,39 @@
       const symType = symbol.includes("BTC") ? "BTC" : symbol.includes("ETH") ? "ETH" : "OTHER";
       const estTag = symbol.includes("EST") ? '<span class="tag est">EST</span>' : "";
 
-      card.innerHTML = `
-        <div class="symbol">${symbol} <span class="tag">${symType}</span> ${estTag}</div>
-        <div class="value">${fmtNumber(latestValue)}</div>
-        <div class="meta">Laatste update: ${asLocal(latest.timestamp)}</div>
-        <div class="chart-wrap">
-          <canvas></canvas>
-        </div>
-        ${rows.length ? "" : '<p class="empty">Geen history in geselecteerde range.</p>'}
-        <details>
-          <summary>Toon laatste 10 history-punten</summary>
-          <table>
-            <thead><tr><th>Tijd</th><th>Waarde</th></tr></thead>
-            <tbody>${buildTableRows(rows)}</tbody>
-          </table>
-        </details>
-      `;
+      card.innerHTML =
+        '<div class="symbol">' + symbol + ' <span class="tag">' + symType + '</span> ' + estTag + '</div>' +
+        '<div class="value">' + fmtNumber(latestValue) + '</div>' +
+        '<div class="meta">Last updated: ' + asLocal(latest.timestamp) + '</div>' +
+        '<div class="chart-wrap"><canvas></canvas></div>' +
+        (rows.length ? "" : '<p class="empty">No history in selected range.</p>') +
+        '<details>' +
+          '<summary>Show last 10 data points</summary>' +
+          '<table>' +
+            '<thead><tr><th>Time</th><th>Value</th></tr></thead>' +
+            '<tbody>' + buildTableRows(rows) + '</tbody>' +
+          '</table>' +
+        '</details>';
 
       if (rows.length) {
-        const canvas = card.querySelector("canvas");
-        drawLine(canvas, rows, symbol);
+        drawLine(card.querySelector("canvas"), rows, symbol);
       }
 
       return card;
+    }
+
+    async function loadMainChart() {
+      try {
+        const now = Math.floor(Date.now() / 1000);
+        const results = await Promise.all([
+          getJson("/metrics/BTC.PRICE_USD/history?from=0&to=" + now),
+          getJson("/metrics/BTC.REALIZED_PRICE/history?from=0&to=" + now),
+          getJson("/metrics/BTC.BALANCED_PRICE_EST/history?from=0&to=" + now),
+        ]);
+        drawMainChart(results[0].data || [], results[1].data || [], results[2].data || []);
+      } catch (err) {
+        console.warn("Main chart failed to load:", err.message);
+      }
     }
 
     async function loadAll() {
@@ -447,10 +466,10 @@
       const fromTs = now - rangeDays * 24 * 60 * 60;
       const query = searchEl.value.trim().toUpperCase();
 
-      statusEl.textContent = "Laden van symbolen...";
+      statusEl.textContent = "Loading symbols...";
       const symbolsResp = await getJson("/metrics");
       let symbols = symbolsResp.symbols || [];
-      symbols.sort((a, b) => {
+      symbols.sort(function(a, b) {
         const ia = PRIORITY_SYMBOLS.indexOf(a);
         const ib = PRIORITY_SYMBOLS.indexOf(b);
         if (ia !== -1 && ib !== -1) return ia - ib;
@@ -460,15 +479,15 @@
       });
 
       sumTotalEl.textContent = symbols.length;
-      sumBtcEl.textContent = symbols.filter((s) => s.startsWith("BTC.")).length;
-      sumEthEl.textContent = symbols.filter((s) => s.startsWith("ETH.")).length;
+      sumBtcEl.textContent  = symbols.filter(function(s) { return s.startsWith("BTC."); }).length;
+      sumEthEl.textContent  = symbols.filter(function(s) { return s.startsWith("ETH."); }).length;
       sumRefreshEl.textContent = shortTime();
 
       if (query) {
-        symbols = symbols.filter((s) => s.includes(query));
+        symbols = symbols.filter(function(s) { return s.includes(query); });
       }
 
-      statusEl.textContent = `${symbols.length} symbolen laden...`;
+      statusEl.textContent = "Loading " + symbols.length + " symbols...";
       cardsEl.innerHTML = "";
 
       const chunks = [];
@@ -477,36 +496,35 @@
       }
 
       for (const chunk of chunks) {
-        const data = await Promise.all(
-          chunk.map(async (symbol) => {
-            const [latest, history] = await Promise.all([
-              getJson(`/metrics/${encodeURIComponent(symbol)}`),
-              getJson(`/metrics/${encodeURIComponent(symbol)}/history?from=${fromTs}&to=${now}`),
-            ]);
-            return { symbol, latest, history };
-          })
-        );
+        const data = await Promise.all(chunk.map(async function(symbol) {
+          const histFrom = FULL_HISTORY_SYMBOLS.has(symbol) ? 0 : fromTs;
+          const pair = await Promise.all([
+            getJson("/metrics/" + encodeURIComponent(symbol)),
+            getJson("/metrics/" + encodeURIComponent(symbol) + "/history?from=" + histFrom + "&to=" + now),
+          ]);
+          return { symbol: symbol, latest: pair[0], history: pair[1] };
+        }));
 
         for (const item of data) {
           cardsEl.appendChild(metricCard(item.symbol, item.latest, item.history));
         }
       }
 
-      statusEl.textContent = `Klaar. ${symbols.length} symbolen getoond (${rangeDays} dagen history).`;
+      statusEl.textContent = "Done. " + symbols.length + " symbols loaded (range: " + rangeDays + " days).";
     }
 
     async function boot() {
       try {
-        await loadAll();
+        await Promise.all([loadAll(), loadMainChart()]);
       } catch (err) {
-        statusEl.textContent = `Fout bij laden: ${err.message}`;
+        statusEl.textContent = "Error loading: " + err.message;
         statusEl.style.color = "var(--danger)";
       }
     }
 
     refreshEl.addEventListener("click", boot);
     daysEl.addEventListener("change", boot);
-    searchEl.addEventListener("input", () => {
+    searchEl.addEventListener("input", function() {
       clearTimeout(window.__searchTimer);
       window.__searchTimer = setTimeout(boot, 260);
     });

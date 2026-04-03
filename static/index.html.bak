@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>On-Chain Metrics Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #04110d;
+      --bg-soft: #092118;
+      --panel: #0c1f18;
+      --panel-2: #122a20;
+      --ink: #dff9ed;
+      --muted: #8db8a6;
+      --accent: #55ffb3;
+      --accent-soft: #2cb87c;
+      --line: #245540;
+      --warn: #ffc16b;
+      --danger: #ff8f7d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--ink);
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(rgba(86, 255, 178, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(86, 255, 178, 0.06) 1px, transparent 1px),
+        radial-gradient(circle at 8% -10%, rgba(60, 255, 165, 0.25), transparent 35%),
+        radial-gradient(circle at 105% 10%, rgba(50, 184, 124, 0.18), transparent 30%);
+      background-size: 24px 24px, 24px 24px, auto, auto;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 1rem 1rem 1.4rem;
+    }
+
+    .hero {
+      background: linear-gradient(160deg, rgba(13, 36, 27, 0.92), rgba(10, 29, 22, 0.92));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1rem 1rem 0.9rem;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.38);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      letter-spacing: 0.03em;
+      font-family: "Share Tech Mono", monospace;
+      text-transform: uppercase;
+      color: var(--accent);
+      text-shadow: 0 0 14px rgba(85, 255, 179, 0.35);
+    }
+
+    .subtitle {
+      margin: 0.35rem 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .controls {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .summary {
+      margin-top: 0.8rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.55rem;
+    }
+
+    .tile {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.55rem 0.65rem;
+      background: rgba(18, 42, 32, 0.75);
+    }
+
+    .tile-label {
+      color: var(--muted);
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .tile-value {
+      margin-top: 0.18rem;
+      font-size: 1.05rem;
+      font-family: "Share Tech Mono", monospace;
+      color: var(--accent);
+    }
+
+    .chip,
+    select,
+    button,
+    input {
+      font: inherit;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 0.45rem 0.85rem;
+      background: rgba(10, 31, 23, 0.94);
+      color: var(--ink);
+    }
+
+    input {
+      min-width: 230px;
+    }
+
+    input::placeholder {
+      color: #6f9a8a;
+    }
+
+    button {
+      border-color: var(--accent-soft);
+      background: linear-gradient(120deg, #2fb07a, #58db98);
+      color: #042415;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .grid {
+      margin-top: 1.05rem;
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(15, 39, 29, 0.95), rgba(12, 31, 24, 0.95));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.75rem;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      animation: rise 300ms ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(120deg, transparent, rgba(88, 224, 160, 0.06), transparent);
+    }
+
+    @keyframes rise {
+      from {
+        transform: translateY(8px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .symbol {
+      font-size: 0.74rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      font-family: "Share Tech Mono", monospace;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .tag {
+      border: 1px solid #466f5d;
+      padding: 0.08rem 0.36rem;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      color: #bfe9d4;
+    }
+
+    .tag.est {
+      border-color: #87673a;
+      color: #ffd597;
+    }
+
+    .value {
+      font-size: 1.24rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: "Share Tech Mono", monospace;
+      word-break: break-word;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .chart-wrap {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.35rem;
+      background: linear-gradient(180deg, rgba(7, 22, 16, 0.92), rgba(9, 28, 20, 0.92));
+      min-height: 160px;
+    }
+
+    .empty {
+      color: var(--warn);
+      font-size: 0.86rem;
+      margin: 0.2rem 0 0;
+    }
+
+    details {
+      border-top: 1px dashed var(--line);
+      padding-top: 0.5rem;
+    }
+
+    summary {
+      cursor: pointer;
+      color: #9ee4c2;
+      font-weight: 600;
+      font-size: 0.86rem;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 0.45rem;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    td,
+    th {
+      border-bottom: 1px solid var(--line);
+      padding: 0.28rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .status {
+      margin-top: 0.75rem;
+      color: var(--muted);
+      font-size: 0.83rem;
+      min-height: 1.2rem;
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 0.75rem;
+      }
+
+      h1 {
+        font-size: 1.08rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .value {
+        font-size: 1rem;
+      }
+
+      input {
+        min-width: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>On-Chain Metrics Dashboard // Matrix Console</h1>
+      <p class="subtitle">Realtime monitor met snelle signalen, duidelijke prioriteit en direct inzicht in recente history.</p>
+      <div class="controls">
+        <span class="chip">History Range</span>
+        <select id="days">
+          <option value="7">Laatste 7 dagen</option>
+          <option value="30" selected>Laatste 30 dagen</option>
+          <option value="90">Laatste 90 dagen</option>
+          <option value="365">Laatste 365 dagen</option>
+        </select>
+        <button id="refresh">Vernieuwen</button>
+        <input id="search" placeholder="Filter op BTC, ETH, PRICE..." />
+      </div>
+      <div class="summary">
+        <div class="tile">
+          <div class="tile-label">Totaal symbolen</div>
+          <div class="tile-value" id="sum-total">-</div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">BTC symbolen</div>
+          <div class="tile-value" id="sum-btc">-</div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">ETH symbolen</div>
+          <div class="tile-value" id="sum-eth">-</div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">Laatste refresh</div>
+          <div class="tile-value" id="sum-refresh">-</div>
+        </div>
+      </div>
+      <div class="status" id="status">Laden...</div>
+    </section>
+
+    <section class="grid" id="cards"></section>
+  </main>
+
+  <script>
+    const cardsEl = document.getElementById("cards");
+    const statusEl = document.getElementById("status");
+    const daysEl = document.getElementById("days");
+    const searchEl = document.getElementById("search");
+    const refreshEl = document.getElementById("refresh");
+    const sumTotalEl = document.getElementById("sum-total");
+    const sumBtcEl = document.getElementById("sum-btc");
+    const sumEthEl = document.getElementById("sum-eth");
+    const sumRefreshEl = document.getElementById("sum-refresh");
+    const PRIORITY_SYMBOLS = [
+      "BTC.PRICE_USD",
+      "BTC.REALIZED_PRICE",
+      "BTC.BALANCED_PRICE_EST",
+    ];
+
+    function fmtNumber(value) {
+      const abs = Math.abs(value);
+      if (abs >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
+      if (abs >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
+      if (abs >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
+      if (abs >= 1e3) return `${(value / 1e3).toFixed(2)}K`;
+      if (abs >= 1) return value.toFixed(4);
+      return value.toFixed(8);
+    }
+
+    function asLocal(ts) {
+      return new Date(ts * 1000).toLocaleString();
+    }
+
+    function shortTime() {
+      return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    }
+
+    async function getJson(url) {
+      const r = await fetch(url);
+      if (!r.ok) {
+        throw new Error(`HTTP ${r.status} for ${url}`);
+      }
+      return r.json();
+    }
+
+    function buildTableRows(rows) {
+      const recent = rows.slice(-10).reverse();
+      return recent
+        .map((row) => `<tr><td>${asLocal(row.timestamp)}</td><td>${fmtNumber(Number(row.value))}</td></tr>`)
+        .join("");
+    }
+
+    function drawLine(canvas, points, symbol) {
+      const labels = points.map((p) => new Date(p.timestamp * 1000).toLocaleDateString());
+      const values = points.map((p) => Number(p.value));
+      const color = symbol.includes("EST") ? "#ffc16b" : "#5dffba";
+
+      new Chart(canvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            borderColor: color,
+            borderWidth: 2,
+            fill: true,
+            backgroundColor: `${color}1f`,
+            pointRadius: 0,
+            tension: 0.24
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { display: false },
+            y: {
+              ticks: { maxTicksLimit: 4 },
+              grid: { color: "#224436" }
+            }
+          }
+        }
+      });
+    }
+
+    function metricCard(symbol, latest, history) {
+      const card = document.createElement("article");
+      card.className = "card";
+      const latestValue = Number(latest.value);
+      const rows = history.data || [];
+      const symType = symbol.includes("BTC") ? "BTC" : symbol.includes("ETH") ? "ETH" : "OTHER";
+      const estTag = symbol.includes("EST") ? '<span class="tag est">EST</span>' : "";
+
+      card.innerHTML = `
+        <div class="symbol">${symbol} <span class="tag">${symType}</span> ${estTag}</div>
+        <div class="value">${fmtNumber(latestValue)}</div>
+        <div class="meta">Laatste update: ${asLocal(latest.timestamp)}</div>
+        <div class="chart-wrap">
+          <canvas></canvas>
+        </div>
+        ${rows.length ? "" : '<p class="empty">Geen history in geselecteerde range.</p>'}
+        <details>
+          <summary>Toon laatste 10 history-punten</summary>
+          <table>
+            <thead><tr><th>Tijd</th><th>Waarde</th></tr></thead>
+            <tbody>${buildTableRows(rows)}</tbody>
+          </table>
+        </details>
+      `;
+
+      if (rows.length) {
+        const canvas = card.querySelector("canvas");
+        drawLine(canvas, rows, symbol);
+      }
+
+      return card;
+    }
+
+    async function loadAll() {
+      const rangeDays = Number(daysEl.value);
+      const now = Math.floor(Date.now() / 1000);
+      const fromTs = now - rangeDays * 24 * 60 * 60;
+      const query = searchEl.value.trim().toUpperCase();
+
+      statusEl.textContent = "Laden van symbolen...";
+      const symbolsResp = await getJson("/metrics");
+      let symbols = symbolsResp.symbols || [];
+      symbols.sort((a, b) => {
+        const ia = PRIORITY_SYMBOLS.indexOf(a);
+        const ib = PRIORITY_SYMBOLS.indexOf(b);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.localeCompare(b);
+      });
+
+      sumTotalEl.textContent = symbols.length;
+      sumBtcEl.textContent = symbols.filter((s) => s.startsWith("BTC.")).length;
+      sumEthEl.textContent = symbols.filter((s) => s.startsWith("ETH.")).length;
+      sumRefreshEl.textContent = shortTime();
+
+      if (query) {
+        symbols = symbols.filter((s) => s.includes(query));
+      }
+
+      statusEl.textContent = `${symbols.length} symbolen laden...`;
+      cardsEl.innerHTML = "";
+
+      const chunks = [];
+      for (let i = 0; i < symbols.length; i += 6) {
+        chunks.push(symbols.slice(i, i + 6));
+      }
+
+      for (const chunk of chunks) {
+        const data = await Promise.all(
+          chunk.map(async (symbol) => {
+            const [latest, history] = await Promise.all([
+              getJson(`/metrics/${encodeURIComponent(symbol)}`),
+              getJson(`/metrics/${encodeURIComponent(symbol)}/history?from=${fromTs}&to=${now}`),
+            ]);
+            return { symbol, latest, history };
+          })
+        );
+
+        for (const item of data) {
+          cardsEl.appendChild(metricCard(item.symbol, item.latest, item.history));
+        }
+      }
+
+      statusEl.textContent = `Klaar. ${symbols.length} symbolen getoond (${rangeDays} dagen history).`;
+    }
+
+    async function boot() {
+      try {
+        await loadAll();
+      } catch (err) {
+        statusEl.textContent = `Fout bij laden: ${err.message}`;
+        statusEl.style.color = "var(--danger)";
+      }
+    }
+
+    refreshEl.addEventListener("click", boot);
+    daysEl.addEventListener("change", boot);
+    searchEl.addEventListener("input", () => {
+      clearTimeout(window.__searchTimer);
+      window.__searchTimer = setTimeout(boot, 260);
+    });
+
+    boot();
+  </script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import uvicorn
 from config import settings
 from scheduler import create_scheduler, start_scheduler_and_collect
 from server import app
+from sheets_sync import sync_sheets_backfill
 from storage import init_db
 
 logging.basicConfig(
@@ -20,6 +21,10 @@ logger = logging.getLogger(__name__)
 async def main() -> None:
     # Initialise the database
     await init_db()
+
+    # Optionally backfill full history to Google Sheets on startup
+    if settings.google_sheets_enable_backfill_on_startup:
+        await sync_sheets_backfill()
 
     # Start the scheduler (also runs an immediate first collection)
     scheduler = create_scheduler()
