@@ -88,6 +88,22 @@ SYMBOL_META: dict[str, dict[str, Any]] = {
         "description": "Ethereum Transactions (24 h)",
         "unit": "transactions",
     },
+    "BTC.REALIZED_PRICE": {
+        "description": "Bitcoin Realized Price (avg on-chain cost basis)",
+        "unit": "USD",
+    },
+    "BTC.TRANSFERRED_PRICE": {
+        "description": "Bitcoin Transferred Price (time/volume-weighted spending)",
+        "unit": "USD",
+    },
+    "BTC.BALANCED_PRICE": {
+        "description": "Bitcoin Balanced Price (fair value indicator)",
+        "unit": "USD",
+    },
+    "BTC.DELTA_PRICE": {
+        "description": "Bitcoin Delta Price (fundamental/technical floor model)",
+        "unit": "USD",
+    },
 }
 
 # Resolutions advertised to TradingView (in minutes for intraday, D/W/M for daily+)

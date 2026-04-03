@@ -9,6 +9,10 @@ BTC.DIFFICULTY         – current Bitcoin mining difficulty
 BTC.FEE_MEDIAN        – median transaction fee in satoshis
 ETH.GAS_PRICE          – average Ethereum gas price in Gwei
 ETH.TRANSACTION_COUNT  – number of confirmed Ethereum transactions (24 h)
+BTC.REALIZED_PRICE     – average on-chain cost basis of the market (USD)
+BTC.TRANSFERRED_PRICE  – time- & volume-weighted historical spending price (USD)
+BTC.BALANCED_PRICE     – Realized Price − Transferred Price ("fair value") (USD)
+BTC.DELTA_PRICE        – (Realized Cap − Average Cap) / Supply (USD)
 """
 
 import logging
@@ -16,12 +20,17 @@ from typing import Optional
 
 import httpx
 
+from config import settings
+
 logger = logging.getLogger(__name__)
 
 # Public APIs used (no API key required for these endpoints)
 _BLOCKCHAIN_INFO_STATS = "https://api.blockchain.info/stats"
 _BLOCKCHAIR_BTC = "https://api.blockchair.com/bitcoin/stats"
 _BLOCKCHAIR_ETH = "https://api.blockchair.com/ethereum/stats"
+
+# Glassnode API (requires API key configured in settings)
+_GLASSNODE_BASE = "https://api.glassnode.com/v1/metrics"
 
 # Seconds to wait before giving up on an HTTP request
 _REQUEST_TIMEOUT = 15
@@ -68,6 +77,71 @@ async def collect_eth_blockchair() -> dict[str, float]:
     }
 
 
+async def _glassnode_latest(path: str) -> float:
+    """Fetch the most recent value from a Glassnode metrics endpoint.
+
+    Glassnode returns ``[{"t": <unix>, "v": <value>}, …]``.
+    We take the last element's ``v``.
+    """
+    data = await _get_json(
+        f"{_GLASSNODE_BASE}/{path}",
+        params={"a": "BTC", "api_key": settings.glassnode_api_key},
+    )
+    if not data:
+        raise ValueError(f"Empty response from Glassnode {path}")
+    return float(data[-1]["v"])
+
+
+async def collect_btc_glassnode() -> dict[str, float]:
+    """Collect Bitcoin on-chain pricing metrics from Glassnode.
+
+    Requires a valid ``GLASSNODE_API_KEY`` in settings.  Returns an empty
+    dict when no key is configured so the rest of the collectors keep
+    working.
+
+    Metrics
+    -------
+    BTC.REALIZED_PRICE     – Realized Cap / Circulating Supply (USD)
+    BTC.BALANCED_PRICE     – Realized Price − Transferred Price (USD)
+    BTC.TRANSFERRED_PRICE  – Realized Price − Balanced Price (USD, derived)
+    BTC.DELTA_PRICE        – (Realized Cap − Average Cap) / Supply (USD)
+    """
+    if not settings.glassnode_api_key:
+        logger.debug("Glassnode API key not configured – skipping")
+        return {}
+
+    result: dict[str, float] = {}
+
+    # --- Realized Price ---
+    realized: Optional[float] = None
+    try:
+        realized = await _glassnode_latest("market/price_realized_usd")
+        result["BTC.REALIZED_PRICE"] = realized
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Glassnode BTC.REALIZED_PRICE failed: %s", exc)
+
+    # --- Balanced Price ---
+    balanced: Optional[float] = None
+    try:
+        balanced = await _glassnode_latest("indicators/balanced_price_usd")
+        result["BTC.BALANCED_PRICE"] = balanced
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Glassnode BTC.BALANCED_PRICE failed: %s", exc)
+
+    # --- Transferred Price (derived: Realized − Balanced) ---
+    if realized is not None and balanced is not None:
+        result["BTC.TRANSFERRED_PRICE"] = realized - balanced
+
+    # --- Delta Price ---
+    try:
+        delta = await _glassnode_latest("indicators/delta_price_usd")
+        result["BTC.DELTA_PRICE"] = delta
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Glassnode BTC.DELTA_PRICE failed: %s", exc)
+
+    return result
+
+
 async def collect_all() -> dict[str, float]:
     """Collect all supported on-chain metrics.
 
@@ -80,6 +154,7 @@ async def collect_all() -> dict[str, float]:
         ("blockchain.info BTC", collect_btc_blockchain_info),
         ("Blockchair BTC", collect_btc_blockchair),
         ("Blockchair ETH", collect_eth_blockchair),
+        ("Glassnode BTC", collect_btc_glassnode),
     ]
 
     for name, collector in collectors:
