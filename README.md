@@ -11,8 +11,10 @@ A Python service that **periodically collects on-chain crypto metrics**, stores 
 | **Collection** | Bitcoin and Ethereum on-chain metrics from public APIs (no API key required by default) |
 | **Scheduling** | Configurable collection interval via APScheduler (default: every hour) |
 | **Storage** | Lightweight SQLite database with indexed time-series records |
+| **Dashboard** | Real-time interactive web dashboard at `/` with live charts, matrix-style design, and full data history |
 | **TradingView UDF** | `/udf/*` endpoints implement the UDF protocol so metrics can be plotted directly in TradingView |
 | **REST API** | `/metrics/*` endpoints for generic consumption by other tools |
+| **Google Sheets Sync** | Automatic sync of Realized and Balanced prices to Google Sheets via API with service account authentication |
 
 ### Metrics collected
 
@@ -48,6 +50,108 @@ A Python service that **periodically collects on-chain crypto metrics**, stores 
 
 ---
 
+## Dashboard
+
+The service includes a **real-time interactive web dashboard** at `http://localhost:8000` featuring:
+
+- **Matrix-style design** — Dark green grid background with glowing accents
+- **Live metric cards** — Priority-ordered cards with latest values and mini trend charts
+- **Main combined BTC chart** — Large unified chart showing BTC Price, Realized Price, and Balanced Price with full historical data on a logarithmic Y-axis
+- **Full-history charts** — All Realized and Balanced price data from the entire database (not limited by date range selector)
+- **Interactive data table** — Per-metric historical data table with last 10 data points
+- **Filters and search** — Filter metrics by symbol, adjust time range (7/30/90/365 days)
+- **Live refresh** — Auto-updates every 30 seconds; manual refresh button available
+- **Summary tiles** — Quick stats showing total metrics, BTC/ETH counts, and last refresh time
+
+### Dashboard data flow
+
+1. Browser loads `/` → Serves `static/index.html`
+2. JavaScript fetches metric list from `/metrics`
+3. For each metric, fetches current value from `/metrics/{symbol}`
+4. Fetches history from `/metrics/{symbol}/history?from=...&to=...`
+5. **Realized/Balanced prices always fetch `from=0`** (full history)
+6. All data displayed with Chart.js line graphs
+
+### Key dashboard URLs
+
+| URL | Purpose |
+|---|---|
+| `/` | Main dashboard (HTML + JavaScript) |
+| `/metrics` | JSON list of all metrics |
+| `/metrics/{symbol}` | Latest value for a metric |
+| `/metrics/{symbol}/history?from=X&to=Y` | Historical data in date range |
+
+---
+
+## Google Sheets Integration
+
+Automatically sync Realized Price and Balanced Price data to a Google Sheet for external analysis, dashboards, or TradingView use.
+
+### Setup (one-time)
+
+1. **Create a Google Cloud project**
+   - Go to [Google Cloud Console](https://console.cloud.google.com)
+   - Create a new project
+
+2. **Enable APIs**
+   - Enable `Google Sheets API`
+   - Enable `Google Drive API`
+
+3. **Create a Service Account**
+   - IAM & Admin → Service Accounts → Create Service Account
+   - Give it a name (e.g., "onchain-data-sync")
+   - Grant Editor role (for sheet access)
+
+4. **Create and download JSON key**
+   - In the Service Account, go to "Keys" tab
+   - Create new key → JSON format
+   - Download and save to your project directory (e.g., `credentials.json`)
+
+5. **Create a Google Sheet**
+   - Create a new sheet at [sheets.google.com](https://sheets.google.com)
+   - Copy the Spreadsheet ID from the URL (e.g., `1ABC...XYZ`)
+
+6. **Share the sheet with the service account**
+   - Open `credentials.json` and copy the `client_email` field
+   - Share your Google Sheet with that email address (Editor access)
+
+7. **Configure environment variables** in `.env`:
+   ```bash
+   GOOGLE_SHEETS_CREDENTIALS_PATH=./credentials.json
+   GOOGLE_SHEETS_SPREADSHEET_ID=1ABC...XYZ
+   GOOGLE_SHEETS_SHEET_NAME=OnChainMetrics
+   GOOGLE_SHEETS_ENABLE_BACKFILL_ON_STARTUP=true
+   ```
+
+### How it works
+
+- **Incremental sync** — After each scheduled collection, the latest Realized/Balanced prices are appended to the sheet (daily rows with date, day, month, year, and prices)
+- **Startup backfill** (optional) — On app startup, if `GOOGLE_SHEETS_ENABLE_BACKFILL_ON_STARTUP=true`, the entire historical database is pushed to Sheets (grouped by calendar date, one row per date)
+- **Graceful no-op** — If credentials not configured, sheets sync silently skips without errors
+- **Error resilience** — Failed sheet operations are logged and don't block metric collection
+
+### Google Sheets output format
+
+Each row has 6 columns:
+
+| Column | Example | Purpose |
+|---|---|---|
+| `date` | 2024-01-15 | Calendar date for daily summary |
+| `day` | 15 | Day of month (for TradingView/Sheets analysis) |
+| `month` | 1 | Month of year (for seasonal analysis) |
+| `year` | 2024 | Year (for multi-year analysis) |
+| `realized_price` | 42000.50 | BTC Realized Price (USD) |
+| `balanced_price_est` | 38250.75 | BTC Balanced Price estimate (USD) |
+
+### Use case: TradingView
+
+Once historical data is in Google Sheets:
+1. Use Google Sheets as a data source in TradingView
+2. Plot Realized and Balanced prices as a "fair value" layer
+3. Combine with price action for on-chain confluence signals
+
+---
+
 ## Quick start
 
 ### 1. Clone and install
@@ -71,8 +175,12 @@ cp .env.example .env
 |---|---|---|
 | `HOST` | `0.0.0.0` | HTTP server bind address |
 | `PORT` | `8000` | HTTP server port |
-| `COLLECT_INTERVAL_SECONDS` | `3600` | How often to fetch new metrics |
+| `COLLECT_INTERVAL_SECONDS` | `3600` | How often to fetch new metrics (seconds) |
 | `DB_PATH` | `onchain_metrics.db` | SQLite database file path |
+| `GOOGLE_SHEETS_CREDENTIALS_PATH` | *(unset)* | Path to service account JSON credentials file (e.g., `./credentials.json`) |
+| `GOOGLE_SHEETS_SPREADSHEET_ID` | *(unset)* | Google Sheet ID from URL (e.g., `1ABC...XYZ`) |
+| `GOOGLE_SHEETS_SHEET_NAME` | `OnChainMetrics` | Sheet tab name within the spreadsheet |
+| `GOOGLE_SHEETS_ENABLE_BACKFILL_ON_STARTUP` | `false` | If `true`, backfill entire DB to sheet on app startup |
 
 ### 3. Run
 

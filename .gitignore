@@ -39,3 +39,8 @@ htmlcov/
 
 # Logs
 *.log
+
+# Service account credentials
+*service-account*.json
+*credentials*.json
+white-byway-488215-u7-2ae1dd8cd83a.json
