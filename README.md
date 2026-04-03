@@ -7,10 +7,10 @@ Fetch and display key on-chain Bitcoin pricing metrics from the
 
 | Metric | Description |
 |---|---|
-| **Realized Price** | De gemiddelde on-chain kostprijs van de markt (`Realized Cap / Circulating Supply`). |
-| **Transferred Price** | Een tijd- en volumegewogen maat van historische spending activity. Corrigeert voor "oude" coins die tegen veel lagere prijzen zijn uitgegeven. |
-| **Balanced Price** | `Realized Price − Transferred Price`. Glassnode beschouwt dit als "fair value" aan het eind van bear markets. |
-| **Delta Price** | `(Realized Cap − Average Cap) / Circulating Supply`. Een hybride fundamenteel / technisch bodemmodel. |
+| **Realized Price** | The average on-chain cost basis of the market (`Realized Cap / Circulating Supply`). |
+| **Transferred Price** | A time- and volume-weighted measure of historical spending activity. Adjusts for "old" coins that were spent at much lower prices. |
+| **Balanced Price** | `Realized Price − Transferred Price`. Glassnode considers this a "fair value" indicator at the end of bear markets. |
+| **Delta Price** | `(Realized Cap − Average Cap) / Circulating Supply`. A hybrid fundamental / technical bottom model. |
 
 ## Prerequisites
 
