@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import gspread
+import httpx
 from google.oauth2.service_account import Credentials
 
 from config import settings
@@ -30,6 +31,8 @@ logger = logging.getLogger(__name__)
 
 _REALIZED_SYMBOL = "BTC.REALIZED_PRICE"
 _BALANCED_SYMBOL = "BTC.BALANCED_PRICE_EST"
+_BTC_PRICE_SYMBOL = "BTC.PRICE_USD"
+_COINMETRICS_TIMESERIES = "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics"
 _SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
@@ -62,19 +65,33 @@ def _get_client() -> Optional[gspread.Spreadsheet]:
 
 
 def _ensure_headers(sheet: Any) -> None:
-    """Ensure the sheet has headers. Create them if the sheet is empty."""
+    """Ensure the sheet has headers. Create or upgrade them when needed."""
+    headers = [
+        "date",
+        "day",
+        "month",
+        "year",
+        "btc_price_usd",
+        "realized_price",
+        "balanced_price_est",
+    ]
+
     try:
-        if sheet.row_count == 0 or (sheet.row_count == 1 and not sheet.cell(1, 1).value):
-            sheet.insert_row(
-                ["date", "day", "month", "year", "realized_price", "balanced_price_est"],
-                index=1,
-            )
+        first_row = sheet.row_values(1)
+        if not first_row:
+            sheet.insert_row(headers, index=1)
             logger.info("Initialized sheet headers")
+            return
+
+        # Upgrade from older 6-column header format by adding btc_price_usd.
+        if first_row == ["date", "day", "month", "year", "realized_price", "balanced_price_est"]:
+            sheet.update("A1:G1", [headers])
+            logger.info("Upgraded sheet headers to include btc_price_usd")
     except Exception as exc:  # noqa: BLE001
         logger.warning("Failed to ensure headers: %s", exc)
 
 
-def _ts_to_row(ts: int, realized: float, balanced: float) -> list:
+def _ts_to_row(ts: int, btc_price: float, realized: float, balanced: float) -> list:
     """Convert timestamp and prices to a sheet row."""
     dt = datetime.fromtimestamp(ts, tz=timezone.utc)
     return [
@@ -82,17 +99,80 @@ def _ts_to_row(ts: int, realized: float, balanced: float) -> list:
         dt.day,                            # day
         dt.month,                          # month
         dt.year,                           # year
+        round(btc_price, 6),               # btc_price_usd
         round(realized, 6),                # realized_price
         round(balanced, 6),                # balanced_price_est
     ]
 
 
+async def _coinmetrics_daily_rows() -> list[list]:
+    """Fetch maximum-available daily BTC pricing history from Coin Metrics.
+
+    Returns rows in Google Sheets format.
+    """
+    rows: list[list] = []
+    rows_average_cap = 0.0
+    next_page_url: Optional[str] = _COINMETRICS_TIMESERIES
+    params: Optional[dict[str, Any]] = {
+        "assets": "btc",
+        "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur",
+        "frequency": "1d",
+        "page_size": 10000,
+    }
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        while next_page_url:
+            response = await client.get(next_page_url, params=params)
+            response.raise_for_status()
+            payload = response.json()
+
+            for item in payload.get("data", []):
+                ts_raw = item.get("time")
+                cap_raw = item.get("CapMrktCurUSD")
+                mvrv_raw = item.get("CapMVRVCur")
+                supply_raw = item.get("SplyCur")
+                if not ts_raw or cap_raw is None or mvrv_raw is None or supply_raw is None:
+                    continue
+
+                market_cap = float(cap_raw)
+                mvrv = float(mvrv_raw)
+                supply = float(supply_raw)
+                if mvrv <= 0 or supply <= 0:
+                    continue
+
+                realized_cap = market_cap / mvrv
+                btc_price = market_cap / supply
+                realized_price = realized_cap / supply
+
+                # Delta/Balanced estimate uses cumulative average market cap to mirror app logic.
+                prev_count = len(rows)
+                average_cap = (
+                    market_cap
+                    if prev_count == 0
+                    else ((rows_average_cap * prev_count) + market_cap) / (prev_count + 1)
+                )
+                delta_price = (realized_cap - average_cap) / supply
+                balanced_est = delta_price
+
+                ts = int(datetime.fromisoformat(ts_raw.replace("Z", "+00:00")).timestamp())
+                rows.append(_ts_to_row(ts, btc_price, realized_price, balanced_est))
+
+                rows_average_cap = average_cap
+
+            # Coin Metrics returns relative/absolute next_page_url.
+            next_page_url = payload.get("next_page_url")
+            params = None
+
+    return rows
+
+
 async def sync_sheets_latest(ts: int, metrics: dict[str, float]) -> None:
     """Push the most recent Realized / Balanced data point to Google Sheets."""
+    btc_price = metrics.get(_BTC_PRICE_SYMBOL)
     realized = metrics.get(_REALIZED_SYMBOL)
     balanced = metrics.get(_BALANCED_SYMBOL)
     
-    if realized is None or balanced is None:
+    if btc_price is None or realized is None or balanced is None:
         return
     
     def _do_sync():
@@ -107,12 +187,12 @@ async def sync_sheets_latest(ts: int, metrics: dict[str, float]) -> None:
             sheet = spreadsheet.add_worksheet(
                 title=settings.google_sheets_sheet_name,
                 rows=1000,
-                cols=6,
+                cols=7,
             )
             logger.info("Created new worksheet: %s", settings.google_sheets_sheet_name)
         
         _ensure_headers(sheet)
-        row = _ts_to_row(ts, realized, balanced)
+        row = _ts_to_row(ts, btc_price, realized, balanced)
         
         try:
             sheet.append_row(row)
@@ -140,33 +220,46 @@ async def sync_sheets_backfill() -> None:
         return
     
     logger.info("Starting Google Sheets backfill …")
-    now = int(time.time())
-    realized_rows = await get_history(_REALIZED_SYMBOL, from_ts=0, to_ts=now)
-    balanced_rows = await get_history(_BALANCED_SYMBOL, from_ts=0, to_ts=now)
+
+    # Prefer max-available daily history directly from Coin Metrics.
+    rows_to_write: list[list] = []
+    try:
+        rows_to_write = await _coinmetrics_daily_rows()
+        logger.info("Coin Metrics backfill source: %d daily rows", len(rows_to_write))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Coin Metrics backfill failed, falling back to local DB: %s", exc)
+
+    if not rows_to_write:
+        logger.info("Falling back to local DB history for backfill")
+        now = int(time.time())
+        price_rows = await get_history(_BTC_PRICE_SYMBOL, from_ts=0, to_ts=now)
+        realized_rows = await get_history(_REALIZED_SYMBOL, from_ts=0, to_ts=now)
+        balanced_rows = await get_history(_BALANCED_SYMBOL, from_ts=0, to_ts=now)
     
     # Index by date string (keeps the latest entry per day)
-    def index_by_date(rows: list[dict]) -> dict[str, tuple[int, float]]:
-        by_date: dict[str, tuple[int, float]] = {}
-        for row in rows:
-            ts = int(row["timestamp"])
-            dt = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
-            existing = by_date.get(dt)
-            if existing is None or ts > existing[0]:
-                by_date[dt] = (ts, float(row["value"]))
-        return by_date
-    
-    realized_by_date = index_by_date(realized_rows)
-    balanced_by_date = index_by_date(balanced_rows)
-    
-    all_dates = sorted(set(realized_by_date) | set(balanced_by_date))
-    rows_to_write: list[list] = []
-    for date in all_dates:
-        r_entry = realized_by_date.get(date)
-        b_entry = balanced_by_date.get(date)
-        if r_entry is None or b_entry is None:
-            continue
-        ts = max(r_entry[0], b_entry[0])
-        rows_to_write.append(_ts_to_row(ts, r_entry[1], b_entry[1]))
+        def index_by_date(rows: list[dict]) -> dict[str, tuple[int, float]]:
+            by_date: dict[str, tuple[int, float]] = {}
+            for row in rows:
+                ts = int(row["timestamp"])
+                dt = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+                existing = by_date.get(dt)
+                if existing is None or ts > existing[0]:
+                    by_date[dt] = (ts, float(row["value"]))
+            return by_date
+
+        price_by_date = index_by_date(price_rows)
+        realized_by_date = index_by_date(realized_rows)
+        balanced_by_date = index_by_date(balanced_rows)
+
+        all_dates = sorted(set(price_by_date) | set(realized_by_date) | set(balanced_by_date))
+        for date in all_dates:
+            p_entry = price_by_date.get(date)
+            r_entry = realized_by_date.get(date)
+            b_entry = balanced_by_date.get(date)
+            if p_entry is None or r_entry is None or b_entry is None:
+                continue
+            ts = max(p_entry[0], r_entry[0], b_entry[0])
+            rows_to_write.append(_ts_to_row(ts, p_entry[1], r_entry[1], b_entry[1]))
     
     if not rows_to_write:
         logger.info("Sheets backfill: no overlapping data found")
@@ -179,11 +272,18 @@ async def sync_sheets_backfill() -> None:
             sheet = spreadsheet.add_worksheet(
                 title=settings.google_sheets_sheet_name,
                 rows=max(len(rows_to_write) + 1, 1000),
-                cols=6,
+                cols=7,
             )
             logger.info("Created new worksheet: %s", settings.google_sheets_sheet_name)
         
         _ensure_headers(sheet)
+
+        # Keep only header and rewrite data for a deterministic full backfill.
+        try:
+            if sheet.row_count > 1:
+                sheet.batch_clear(["A2:G"])
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to clear previous backfill rows: %s", exc)
         
         # Append rows in batches to avoid rate limiting
         batch_size = 100
