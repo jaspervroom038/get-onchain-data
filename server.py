@@ -19,10 +19,12 @@ GET /metrics/{symbol}/history – time-range history for a symbol
 import math
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from storage import get_history, init_db, list_symbols, save_metric
 
@@ -53,6 +55,8 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
+_BASE_DIR = Path(__file__).resolve().parent
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +137,12 @@ _SUPPORTED_RESOLUTIONS = ["60", "240", "1D", "1W"]
 # ---------------------------------------------------------------------------
 # TradingView UDF endpoints
 # ---------------------------------------------------------------------------
+
+
+@app.get("/", include_in_schema=False)
+async def dashboard() -> FileResponse:
+    """Serve the built-in dashboard page."""
+    return FileResponse(_BASE_DIR / "static" / "index.html")
 
 
 @app.get("/udf/config", tags=["TradingView UDF"])

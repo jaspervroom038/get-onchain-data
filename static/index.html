@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>On-Chain Metrics Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-a: #eef7f4;
+      --bg-b: #fff7ea;
+      --card: #ffffff;
+      --ink: #19303a;
+      --subtle: #6a7d86;
+      --accent: #0b8f72;
+      --accent-soft: #d7f3eb;
+      --line: #e4ecef;
+      --warn: #d86f20;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Sora", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, #d8f5eb 0, rgba(216, 245, 235, 0) 35%),
+        radial-gradient(circle at 90% 5%, #ffe7c9 0, rgba(255, 231, 201, 0) 35%),
+        linear-gradient(160deg, var(--bg-a), var(--bg-b));
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .hero {
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 18px 44px rgba(16, 40, 49, 0.08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: 0.01em;
+    }
+
+    .subtitle {
+      margin: 0.35rem 0 0;
+      color: var(--subtle);
+      font-size: 0.93rem;
+    }
+
+    .controls {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .chip,
+    select,
+    button,
+    input {
+      font: inherit;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 0.45rem 0.85rem;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    button {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .grid {
+      margin-top: 1rem;
+      display: grid;
+      gap: 0.9rem;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 0.85rem;
+      box-shadow: 0 8px 28px rgba(16, 40, 49, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      animation: rise 280ms ease-out;
+    }
+
+    @keyframes rise {
+      from {
+        transform: translateY(8px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .symbol {
+      font-size: 0.75rem;
+      color: var(--subtle);
+      letter-spacing: 0.08em;
+    }
+
+    .value {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .meta {
+      color: var(--subtle);
+      font-size: 0.8rem;
+    }
+
+    .chart-wrap {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.35rem;
+      background: #fcfffe;
+      min-height: 170px;
+    }
+
+    .empty {
+      color: var(--warn);
+      font-size: 0.86rem;
+      margin: 0.2rem 0 0;
+    }
+
+    details {
+      border-top: 1px dashed var(--line);
+      padding-top: 0.5rem;
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.86rem;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 0.45rem;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    td,
+    th {
+      border-bottom: 1px solid var(--line);
+      padding: 0.28rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .status {
+      margin-top: 0.75rem;
+      color: var(--subtle);
+      font-size: 0.83rem;
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 0.75rem;
+      }
+
+      h1 {
+        font-size: 1.15rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .value {
+        font-size: 1.03rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>On-Chain Metrics Dashboard</h1>
+      <p class="subtitle">Live overzicht van alle opgeslagen metrics met history per symbool.</p>
+      <div class="controls">
+        <span class="chip">Range</span>
+        <select id="days">
+          <option value="7">Laatste 7 dagen</option>
+          <option value="30" selected>Laatste 30 dagen</option>
+          <option value="90">Laatste 90 dagen</option>
+          <option value="365">Laatste 365 dagen</option>
+        </select>
+        <button id="refresh">Vernieuwen</button>
+        <input id="search" placeholder="Filter op BTC, ETH, PRICE..." />
+      </div>
+      <div class="status" id="status">Laden...</div>
+    </section>
+
+    <section class="grid" id="cards"></section>
+  </main>
+
+  <script>
+    const cardsEl = document.getElementById("cards");
+    const statusEl = document.getElementById("status");
+    const daysEl = document.getElementById("days");
+    const searchEl = document.getElementById("search");
+    const refreshEl = document.getElementById("refresh");
+
+    function fmtNumber(value) {
+      const abs = Math.abs(value);
+      if (abs >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
+      if (abs >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
+      if (abs >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
+      if (abs >= 1e3) return `${(value / 1e3).toFixed(2)}K`;
+      if (abs >= 1) return value.toFixed(4);
+      return value.toFixed(8);
+    }
+
+    function asLocal(ts) {
+      return new Date(ts * 1000).toLocaleString();
+    }
+
+    async function getJson(url) {
+      const r = await fetch(url);
+      if (!r.ok) {
+        throw new Error(`HTTP ${r.status} for ${url}`);
+      }
+      return r.json();
+    }
+
+    function buildTableRows(rows) {
+      const recent = rows.slice(-10).reverse();
+      return recent
+        .map((row) => `<tr><td>${asLocal(row.timestamp)}</td><td>${fmtNumber(Number(row.value))}</td></tr>`)
+        .join("");
+    }
+
+    function drawLine(canvas, points, symbol) {
+      const labels = points.map((p) => new Date(p.timestamp * 1000).toLocaleDateString());
+      const values = points.map((p) => Number(p.value));
+      const color = symbol.includes("EST") ? "#d86f20" : "#0b8f72";
+
+      new Chart(canvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            borderColor: color,
+            borderWidth: 2,
+            fill: true,
+            backgroundColor: `${color}22`,
+            pointRadius: 0,
+            tension: 0.24
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { display: false },
+            y: {
+              ticks: { maxTicksLimit: 4 },
+              grid: { color: "#edf3f5" }
+            }
+          }
+        }
+      });
+    }
+
+    function metricCard(symbol, latest, history) {
+      const card = document.createElement("article");
+      card.className = "card";
+      const latestValue = Number(latest.value);
+      const rows = history.data || [];
+
+      card.innerHTML = `
+        <div class="symbol">${symbol}</div>
+        <div class="value">${fmtNumber(latestValue)}</div>
+        <div class="meta">Laatste update: ${asLocal(latest.timestamp)}</div>
+        <div class="chart-wrap">
+          <canvas></canvas>
+        </div>
+        ${rows.length ? "" : '<p class="empty">Geen history in geselecteerde range.</p>'}
+        <details>
+          <summary>Toon laatste 10 history-punten</summary>
+          <table>
+            <thead><tr><th>Tijd</th><th>Waarde</th></tr></thead>
+            <tbody>${buildTableRows(rows)}</tbody>
+          </table>
+        </details>
+      `;
+
+      if (rows.length) {
+        const canvas = card.querySelector("canvas");
+        drawLine(canvas, rows, symbol);
+      }
+
+      return card;
+    }
+
+    async function loadAll() {
+      const rangeDays = Number(daysEl.value);
+      const now = Math.floor(Date.now() / 1000);
+      const fromTs = now - rangeDays * 24 * 60 * 60;
+      const query = searchEl.value.trim().toUpperCase();
+
+      statusEl.textContent = "Laden van symbolen...";
+      const symbolsResp = await getJson("/metrics");
+      let symbols = symbolsResp.symbols || [];
+      symbols.sort();
+
+      if (query) {
+        symbols = symbols.filter((s) => s.includes(query));
+      }
+
+      statusEl.textContent = `${symbols.length} symbolen laden...`;
+      cardsEl.innerHTML = "";
+
+      const chunks = [];
+      for (let i = 0; i < symbols.length; i += 6) {
+        chunks.push(symbols.slice(i, i + 6));
+      }
+
+      for (const chunk of chunks) {
+        const data = await Promise.all(
+          chunk.map(async (symbol) => {
+            const [latest, history] = await Promise.all([
+              getJson(`/metrics/${encodeURIComponent(symbol)}`),
+              getJson(`/metrics/${encodeURIComponent(symbol)}/history?from=${fromTs}&to=${now}`),
+            ]);
+            return { symbol, latest, history };
+          })
+        );
+
+        for (const item of data) {
+          cardsEl.appendChild(metricCard(item.symbol, item.latest, item.history));
+        }
+      }
+
+      statusEl.textContent = `Klaar. ${symbols.length} symbolen getoond (${rangeDays} dagen history).`;
+    }
+
+    async function boot() {
+      try {
+        await loadAll();
+      } catch (err) {
+        statusEl.textContent = `Fout bij laden: ${err.message}`;
+      }
+    }
+
+    refreshEl.addEventListener("click", boot);
+    daysEl.addEventListener("change", boot);
+    searchEl.addEventListener("input", () => {
+      clearTimeout(window.__searchTimer);
+      window.__searchTimer = setTimeout(boot, 260);
+    });
+
+    boot();
+  </script>
+</body>
+</html>

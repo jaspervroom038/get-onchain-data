@@ -28,6 +28,13 @@ def test_udf_config():
     assert data["supports_search"] is True
 
 
+def test_dashboard_homepage():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "On-Chain Metrics Dashboard" in response.text
+
+
 def test_udf_time():
     response = client.get("/udf/time")
     assert response.status_code == 200
