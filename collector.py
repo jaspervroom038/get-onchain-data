@@ -101,6 +101,7 @@ async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
     - Circulating Supply (SplyCur)
 
     Derived metrics:
+    - BTC Price = Market Cap / Supply
     - Realized Cap = Market Cap / MVRV
     - Realized Price = Realized Cap / Supply
     - Average Cap = running average of BTC.MARKET_CAP in local storage
@@ -114,6 +115,7 @@ async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
     BTC.MARKET_CAP           – Market capitalization (USD)
     BTC.MVRV                 – Market Cap / Realized Cap ratio
     BTC.CIRCULATING_SUPPLY   – circulating supply (BTC)
+    BTC.PRICE_USD            – spot proxy from market cap / supply (USD)
     BTC.REALIZED_CAP         – Market Cap / MVRV (USD)
     BTC.AVERAGE_CAP          – running average Market Cap from local DB (USD)
     BTC.REALIZED_PRICE       – Realized Cap / Circulating Supply (USD)
@@ -131,6 +133,7 @@ async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
         raise ValueError("Invalid Coin Metrics inputs for pricing derivation")
 
     realized_cap = market_cap / mvrv
+    btc_price = market_cap / supply
     realized_price = realized_cap / supply
 
     average_cap = await get_average_metric("BTC.MARKET_CAP")
@@ -147,6 +150,7 @@ async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
         "BTC.MARKET_CAP": market_cap,
         "BTC.MVRV": mvrv,
         "BTC.CIRCULATING_SUPPLY": supply,
+        "BTC.PRICE_USD": btc_price,
         "BTC.REALIZED_CAP": realized_cap,
         "BTC.AVERAGE_CAP": average_cap,
         "BTC.REALIZED_PRICE": realized_price,

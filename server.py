@@ -104,6 +104,10 @@ SYMBOL_META: dict[str, dict[str, Any]] = {
         "description": "Bitcoin Circulating Supply",
         "unit": "BTC",
     },
+    "BTC.PRICE_USD": {
+        "description": "Bitcoin Price (USD, derived from market cap / supply)",
+        "unit": "USD",
+    },
     "BTC.REALIZED_CAP": {
         "description": "Bitcoin Realized Capitalization",
         "unit": "USD",

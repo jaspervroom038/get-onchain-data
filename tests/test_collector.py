@@ -95,6 +95,7 @@ async def test_collect_btc_coinmetrics_pricing_derives_values():
     assert metrics["BTC.MARKET_CAP"] == pytest.approx(market_cap)
     assert metrics["BTC.MVRV"] == pytest.approx(mvrv)
     assert metrics["BTC.CIRCULATING_SUPPLY"] == pytest.approx(supply)
+    assert metrics["BTC.PRICE_USD"] == pytest.approx(market_cap / supply)
     assert metrics["BTC.REALIZED_CAP"] == pytest.approx(realized_cap)
     assert metrics["BTC.AVERAGE_CAP"] == pytest.approx(average_cap)
     assert metrics["BTC.REALIZED_PRICE"] == pytest.approx(realized_price)
@@ -133,6 +134,7 @@ async def test_collect_all_aggregates_sources():
     assert "BTC.FEE_MEDIAN" in metrics
     assert "ETH.GAS_PRICE" in metrics
     assert "BTC.REALIZED_PRICE" in metrics
+    assert "BTC.PRICE_USD" in metrics
     assert "BTC.DELTA_PRICE" in metrics
     assert "BTC.BALANCED_PRICE_EST" in metrics
     assert "BTC.TRANSFERRED_PRICE_EST" in metrics
