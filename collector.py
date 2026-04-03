@@ -89,7 +89,7 @@ async def _coinmetrics_latest_row() -> dict[str, Any]:
         _COINMETRICS_TIMESERIES,
         params={
             "assets": "btc",
-            "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur,RevUSD",
+            "metrics": "CapMrktCurUSD,CapMVRVCur,SplyCur",
             "frequency": "1d",
             "limit_per_asset": 1,
         },
@@ -146,9 +146,9 @@ async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
     # NUPL: Net Unrealized Profit/Loss
     nupl = 1 - (1 / mvrv)
 
-    # Miner revenue and Puell Multiple
-    rev_raw = row.get("RevUSD")
-    miner_revenue = float(rev_raw) if rev_raw is not None else 0.0
+    # Estimated miner revenue: ~144 blocks/day × 3.125 BTC reward × price
+    # (post-2024 halving; approximation for the Puell Multiple)
+    miner_revenue = 144 * 3.125 * btc_price
 
     now_ts = int(time.time())
     rev_sma_365 = await get_daily_sma("BTC.MINER_REVENUE", 365, to_ts=now_ts)
@@ -171,11 +171,9 @@ async def collect_btc_coinmetrics_pricing() -> dict[str, float]:
         "BTC.BALANCED_PRICE_EST": balanced_est,
         "BTC.TRANSFERRED_PRICE_EST": transferred_est,
         "BTC.NUPL": nupl,
+        "BTC.MINER_REVENUE": miner_revenue,
+        "BTC.PUELL_MULTIPLE": puell_multiple,
     }
-
-    if miner_revenue > 0:
-        result["BTC.MINER_REVENUE"] = miner_revenue
-        result["BTC.PUELL_MULTIPLE"] = puell_multiple
 
     return result
 

@@ -46,7 +46,6 @@ COINMETRICS_RESPONSE = {
             "CapMrktCurUSD": "1338870647177.839",
             "CapMVRVCur": "1.236157058152968281",
             "SplyCur": "20010500.0",
-            "RevUSD": "50000000",
         }
     ]
 }
@@ -114,8 +113,10 @@ async def test_collect_btc_coinmetrics_pricing_derives_values():
     # NUPL = 1 - 1/MVRV
     assert metrics["BTC.NUPL"] == pytest.approx(1 - (1 / mvrv))
 
-    # Miner revenue
-    assert metrics["BTC.MINER_REVENUE"] == pytest.approx(50000000.0)
+    # Estimated miner revenue: 144 blocks × 3.125 BTC × price
+    btc_price = market_cap / supply
+    expected_rev = 144 * 3.125 * btc_price
+    assert metrics["BTC.MINER_REVENUE"] == pytest.approx(expected_rev)
 
     # Puell multiple with no SMA history → fallback 1.0
     assert metrics["BTC.PUELL_MULTIPLE"] == pytest.approx(1.0)
@@ -139,7 +140,9 @@ async def test_collect_btc_coinmetrics_puell_with_sma():
          patch("collector.get_daily_sma", new=AsyncMock(return_value=40_000_000.0)):
         metrics = await collect_btc_coinmetrics_pricing()
 
-    assert metrics["BTC.PUELL_MULTIPLE"] == pytest.approx(50_000_000.0 / 40_000_000.0)
+    btc_price = 1338870647177.839 / 20010500.0
+    expected_rev = 144 * 3.125 * btc_price
+    assert metrics["BTC.PUELL_MULTIPLE"] == pytest.approx(expected_rev / 40_000_000.0)
 
 
 @pytest.mark.asyncio

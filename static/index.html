@@ -439,12 +439,13 @@
     destroyCardCharts();
     cardsEl.innerHTML = "";
 
-    // Fetch symbols + main chart + signal values in parallel
+    // Fetch symbols + main chart data in parallel (each request fails gracefully)
+    var emptyHist = {data:[]};
     var [symbolsResp, priceH, realizedH, balancedH] = await Promise.all([
       getJson("/metrics"),
-      getJson(histUrl("BTC.PRICE_USD", 0, now, res)),
-      getJson(histUrl("BTC.REALIZED_PRICE", 0, now, res)),
-      getJson(histUrl("BTC.BALANCED_PRICE_EST", 0, now, res)),
+      getJson(histUrl("BTC.PRICE_USD", 0, now, res)).catch(function(){return emptyHist;}),
+      getJson(histUrl("BTC.REALIZED_PRICE", 0, now, res)).catch(function(){return emptyHist;}),
+      getJson(histUrl("BTC.BALANCED_PRICE_EST", 0, now, res)).catch(function(){return emptyHist;}),
     ]);
 
     drawMainChart(priceH.data||[], realizedH.data||[], balancedH.data||[]);
@@ -479,17 +480,18 @@
 
     statusEl.textContent = "Loading "+symbols.length+" symbols…";
 
-    // Load all card data in parallel
-    var cardData = await Promise.all(symbols.map(function(sym){
+    // Load all card data in parallel (each card fails independently)
+    var cardResults = await Promise.all(symbols.map(function(sym){
       return Promise.all([
-        getJson("/metrics/"+encodeURIComponent(sym)),
-        getJson(histUrl(sym, fromTs, now, res)),
+        getJson("/metrics/"+encodeURIComponent(sym)).catch(function(){return null;}),
+        getJson(histUrl(sym, fromTs, now, res)).catch(function(){return {symbol:sym,data:[]};}),
       ]).then(function(pair){return {symbol:sym,latest:pair[0],history:pair[1]};});
     }));
 
-    // Render cards
-    for (var i=0; i<cardData.length; i++) {
-      var item = cardData[i];
+    // Render cards (skip symbols with no latest data)
+    for (var i=0; i<cardResults.length; i++) {
+      var item = cardResults[i];
+      if (!item.latest) continue;  // symbol not in DB yet
       cardsEl.appendChild(buildCard(item.symbol, item.latest, item.history));
       // Update bottom signals
       if (SIGNAL_CONFIG[item.symbol]) {

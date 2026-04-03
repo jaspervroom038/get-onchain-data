@@ -237,22 +237,29 @@ async def sync_sheets_backfill() -> None:
 
         _ensure_headers(sheet)
 
-        # Clear existing data rows for a clean backfill
+        # Remove all data rows (keep header) and resize for new data
+        target_rows = len(rows_to_write) + 1  # +1 for header
         try:
             if sheet.row_count > 1:
-                last_col = _col_letter(len(_all_headers()))
-                sheet.batch_clear([f"A2:{last_col}"])
+                sheet.delete_rows(2, sheet.row_count)
+            sheet.resize(rows=target_rows, cols=len(_all_headers()))
         except Exception as exc:  # noqa: BLE001
-            logger.warning("Failed to clear previous backfill rows: %s", exc)
+            logger.warning("Failed to clear/resize sheet: %s", exc)
 
-        batch_size = 100
+        # Write all rows in batches using update (not append) to avoid
+        # appending after phantom empty rows.
+        last_col = _col_letter(len(_all_headers()))
+        batch_size = 500
         for i in range(0, len(rows_to_write), batch_size):
             batch = rows_to_write[i : i + batch_size]
+            start_row = i + 2  # 1-indexed, row 1 is header
+            end_row = start_row + len(batch) - 1
+            cell_range = f"A{start_row}:{last_col}{end_row}"
             try:
-                sheet.append_rows(batch, value_input_option="RAW")
-                logger.info("Sheets backfill: appended batch of %d rows", len(batch))
+                sheet.update(cell_range, batch, value_input_option="RAW")
+                logger.info("Sheets backfill: wrote rows %d–%d", start_row, end_row)
             except Exception as exc:  # noqa: BLE001
-                logger.warning("Failed to append batch to sheets: %s", exc)
+                logger.warning("Failed to write batch to sheets: %s", exc)
 
     loop = asyncio.get_event_loop()
     try:
